@@ -166,21 +166,18 @@ addNetwork({
   name: 'livenet',
   alias: 'mainnet',
   is,
-  pubkeyhash: 0x00,
-  privatekey: 0x80,
-  scripthash: 0x05,
-  bech32prefix: 'bc',
+  pubkeyhash: 0x3d, // 61
+  privatekey: 0xbd, // 186
+  scripthash: 0x05, // 05
+  bech32prefix: 'rdd',
   xpubkey: 0x0488b21e,
   xprivkey: 0x0488ade4,
-  networkMagic: 0xf9beb4d9,
-  port: 8333,
+  networkMagic: 0xfbc0b6db,
+  port: 45444,
   dnsSeeds: [
-    'seed.bitcoin.sipa.be',
-    'dnsseed.bluematt.me',
-    'dnsseed.bitcoin.dashjr.org',
-    'seed.bitcoinstats.com',
-    'seed.bitnodes.io',
-    'bitseed.xf2.org'
+    'dnsseed01.redd.ink',
+    'dnsseed02.redd.ink',
+    'dnsseed03.redd.ink'
   ]
 });
 
@@ -194,21 +191,19 @@ addNetwork({
   name: 'testnet',
   alias: 'testnet',
   is,
-  pubkeyhash: 0x6f,
-  privatekey: 0xef,
-  scripthash: 0xc4,
-  bech32prefix: 'tb',
+  pubkeyhash: 0x6f, // 111
+  privatekey: 0xef, // 239
+  scripthash: 0xc4, // 196
+  bech32prefix: 'trdd',
   xpubkey: 0x043587cf,
   xprivkey: 0x04358394,
   variants: [{
     name: 'testnet3',
-    networkMagic: 0x0b110907,
-    port: 18333,
+    networkMagic: 0xfec3b9de,
+    port: 55444,
     dnsSeeds: [
-      'testnet-seed.bitcoin.petertodd.org',
-      'testnet-seed.bluematt.me',
-      'testnet-seed.alexykot.me',
-      'testnet-seed.bitcoin.schildbach.de'
+      'seed-testnet.reddcoin.com',
+      'dnsseed01-testnet.redd.ink'
     ]
   }, {
     name: 'signet',
