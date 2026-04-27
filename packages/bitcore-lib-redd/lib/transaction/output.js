@@ -81,18 +81,23 @@ Object.defineProperty(Output.prototype, 'satoshis', {
       this._satoshisBN = num;
       this._satoshis = num.toNumber();
     } else if (_.isString(num)) {
-      this._satoshis = parseInt(num);
-      this._satoshisBN = BN.fromNumber(this._satoshis);
+      // Use the string path through bn.js to preserve precision for amounts
+      // larger than Number.MAX_SAFE_INTEGER.
+      this._satoshisBN = new BN(num, 10);
+      this._satoshis = this._satoshisBN.toNumber();
     } else {
       $.checkArgument(
-        JSUtil.isNaturalNumber(num),
+        _.isNumber(num) && isFinite(num) && num >= 0 && Math.floor(num) === num,
         'Output satoshis is not a natural number'
       );
-      this._satoshisBN = BN.fromNumber(num);
+      // bn.js's `new BN(<unsafe-integer>)` asserts; reroute via string so
+      // amounts above 2^53 (e.g. reddcoin block-1's 54.5 peta-satoshi
+      // coinbase) round-trip through toObject/fromObject.
+      this._satoshisBN = new BN(num.toString(10), 10);
       this._satoshis = num;
     }
     $.checkState(
-      JSUtil.isNaturalNumber(this._satoshis),
+      _.isNumber(this._satoshis) && isFinite(this._satoshis) && this._satoshis >= 0,
       'Output satoshis is not a natural number'
     );
   }

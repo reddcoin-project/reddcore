@@ -28,7 +28,6 @@ var Output = require('./output');
 var Script = require('../script');
 var PrivateKey = require('../privatekey');
 var BN = require('../crypto/bn');
-var timeUtil = require('../util/time');
 
 /**
  * Represents a transaction, a set of inputs and outputs to change ownership of tokens
@@ -369,11 +368,15 @@ Transaction.prototype.toBufferWriter = function(writer, noWitness) {
 
   writer.writeUInt32LE(this.nLockTime);
 
-  // redd: if no timestamp present, take current time (in seconds)
+  // Reddcoin PoS rule: tx versions > POW_TX_VERSION must carry an
+  // additional 4-byte nTime field. We always emit it for v2+ — a tx
+  // parsed from bitcoin-format bytes (no nTime in source) gets nTime=0
+  // appended on re-serialise, which is the correct reddcoin form for
+  // that tx. Sighash, being signed-bytes critical, uses toSigningBuffer
+  // which deliberately excludes nTime so signatures match across
+  // bitcoin and reddcoin.
   if (this.version > Transaction.POW_TX_VERSION) {
-    var timestamp = this.nTime ? this.nTime : 0;
-    this.nTime = timestamp; // force update of timestamp on object
-    writer.writeUInt32LE(this.nTime);
+    writer.writeUInt32LE(this.nTime || 0);
   }
 
   return writer;
@@ -464,8 +467,14 @@ Transaction.prototype.fromBufferReader = function(reader) {
 
   this.nLockTime = reader.readUInt32LE();
 
-  if ((this.version > Transaction.POW_TX_VERSION) && !reader.eof()) {
-    this.nTime = reader.readUInt32LE();
+  if (this.version > Transaction.POW_TX_VERSION) {
+    // PoS tx — read nTime if present in source, otherwise default to 0
+    // (the source was a bitcoin-format buffer; reserialising will produce
+    // the proper reddcoin form with a zero nTime).
+    this.nTime = !reader.eof() ? reader.readUInt32LE() : 0;
+  } else {
+    // v1 (PoW) tx — no nTime field at the consensus level.
+    this.nTime = undefined;
   }
 
   return this;
@@ -488,8 +497,10 @@ Transaction.prototype.toObject = Transaction.prototype.toJSON = function toObjec
     outputs: outputs,
     nLockTime: this.nLockTime,
   };
-  if (this.nTime) {
-    obj.nTime = this.nTime;
+  // PoS txs (version > 1) always have an nTime field at the protocol
+  // level. v1 (PoW) txs have no nTime (this.nTime is undefined for them).
+  if (this.version > Transaction.POW_TX_VERSION) {
+    obj.nTime = this.nTime || 0;
   }
   if (this._changeScript) {
     obj.changeScript = this._changeScript.toString();
@@ -545,9 +556,9 @@ Transaction.prototype.fromObject = function fromObject(arg, opts) {
     this._fee = transaction.fee;
   }
   this.nLockTime = transaction.nLockTime;
-  if (this.version > Transaction.POW_TX_VERSION) {
-      this.nTime = transaction.nTime;
-  }
+  // Faithfully copy presence/absence of nTime: undefined means "field not
+  // present" (e.g. v1 PoW tx, or a bitcoin-format v2 parsed without nTime).
+  this.nTime = transaction.nTime;
   this.version = transaction.version;
   this._checkConsistency(arg);
   return this;
@@ -642,7 +653,12 @@ Transaction.prototype.fromString = function(string) {
 Transaction.prototype._newTransaction = function() {
   this.version = CURRENT_VERSION;
   this.nLockTime = DEFAULT_NLOCKTIME;
-  this.nTime = timeUtil.currentTime();
+  // nTime starts at 0; reddcoind stamps the actual time at broadcast/relay,
+  // not at construction. (Phase 3b.9 originally set this to
+  // timeUtil.currentTime() but that breaks deterministic serialisation —
+  // tests can't predict the value, and downstream signers don't expect a
+  // pre-stamped nTime to bake into signed bytes.)
+  this.nTime = 0;
 };
 
 /* Transaction creation interface */
@@ -1163,7 +1179,9 @@ Transaction.prototype._estimateSize = function() {
 
   result += 4; // nLockTime
 
-  result += 4; // nTime
+  if (this.version > Transaction.POW_TX_VERSION) {
+    result += 4; // nTime
+  }
 
   return Math.ceil(result);
 };

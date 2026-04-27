@@ -300,7 +300,7 @@ describe('Transaction', function() {
   var changeAddress = 'mgBCJAsvzgT2qNNeXsoECg2uPKrUsZ76up';
   var changeAddressP2SH = '2N7T3TAetJrSCruQ39aNrJvYLhG1LJosujf';
   var changeAddressP2WPKH = 'trdd1qt37dc0yj6rr79jq8223xtzxan72kwd5tfnjrtm';
-  var changeAddressP2WSH = 'tb1qk0jhwmn65dqmlp755a7cff40fnvzsnhzq290kezrfs9d308an3tqlpjvad';
+  var changeAddressP2WSH = 'trdd1qk0jhwmn65dqmlp755a7cff40fnvzsnhzq290kezrfs9d308an3tqxgct6q';
 
   var simpleUtxoWith1BTC = {
     address: fromAddress,
@@ -2016,6 +2016,10 @@ describe('Transaction', function() {
     });
 
     it('should correctly calculation the size for a segwit tx', function() {
+      // v2 reddcoin PoS tx — gets a 4-byte nTime appended on serialise
+      // even when the input hex came from a bitcoin-format buffer that
+      // didn't include it. So expected sizes are bitcoin's + 4 bytes
+      // (in the non-witness portion, which contributes 4x to weight).
       const t = new Transaction('020000000001015f8aa587aba19d10a1f12cd67ea3065a6eafa009ccec529597c2021cbf96e5700000000000fdffffff0280a4bf070000000016001498b78eb72df917e39769e68e9390aed719704dc958963e22010000001600141ebe37ae991227a14811cb674bd7f0f93d96a25f024730440220346178b20de865664c3c82cdf2e6ec5774995dba6854f83d5fd5d5e96f255d2902206e088257e59593365ac33334e7f2d9600d2ea69923146bfea41b0692c1e55f720121039a973d562a9efd1a55b2d12fe966529df75f31e1892cc15892ba956d96dc4d1d71000000');
       t.size.should.equal(226);
       t.vsize.should.equal(145);

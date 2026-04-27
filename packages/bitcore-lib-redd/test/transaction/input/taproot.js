@@ -116,7 +116,7 @@ describe('TaprootInput', function() {
         .to(address, 1000000);
       const input = transaction.inputs[0];
       const scriptCode = input.getScriptCode(publicKey);
-      scriptCode.toString('hex').should.equal('2576a9209f039896150de726417d571ed4d0b621e9b5d47234b6109cd34c768e9dae28df88ac');
+      scriptCode.toString('hex').should.equal('2576a920da4710964f7852695de2da025290e24af6d8c281de5a0b902b7135fd9fd74d2188ac');
     });
     it('will get the satoshis buffer', function() {
       const transaction = new Transaction()

@@ -27,10 +27,24 @@ describe('sighash', function() {
       var sighashbuf = Buffer.from(vector[4], 'hex');
       var tx = new Transaction(txbuf);
 
-      //make sure transacion to/from buffer is isomorphic
-      tx.uncheckedSerialize().should.equal(txbuf.toString('hex'));
+      // Make sure transaction to/from buffer is isomorphic. These vectors
+      // are bitcoind's; some PoS-version vectors already have a 4-byte
+      // tail that the parser reads as nTime, others have nothing trailing
+      // nLockTime. Either way reddcoin's serialiser always emits an
+      // nTime for v2+, so the round-trip equals the source bytes when
+      // nTime was present, or the source bytes plus '00000000' when it
+      // wasn't.
+      var actual = tx.uncheckedSerialize();
+      var expected = txbuf.toString('hex');
+      if (tx.version > Transaction.POW_TX_VERSION && actual !== expected) {
+        expected += '00000000';
+      }
+      actual.should.equal(expected);
 
-      //sighash ought to be correct
+      // Sighash ought to be correct. Reddcoin's toSigningBuffer (used by
+      // sighash.sighash) deliberately excludes nTime, so the sighash bytes
+      // match bitcoind's expected hashes even though the on-wire tx
+      // serialisation differs by 4 bytes.
       sighash.sighash(tx, nhashtype, nin, subscript).toString('hex').should.equal(sighashbuf.toString('hex'));
     });
   });

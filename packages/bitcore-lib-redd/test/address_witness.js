@@ -16,7 +16,7 @@ const Networks = bitcore.Networks;
 
 describe('Witness Address', function() {
 
-  var pubkeyhash = Buffer.from('2a9540f5cd929bf742d16b4e1bf1b0e874c907c9', 'hex');
+  var pubkeyhash = Buffer.from('850397c458b8766cde207bb9f98ad9b5e9dfe20c', 'hex');
   var str = 'rdd1qs5pe03zchpmxeh3q0wulnzkekh5alcsvrlnfju';
   var wrappedStr = '3LfTZncZYsaxGBWYfDg8MTTFVKHmUHoZyA';
   var buf = Buffer.from(str, 'utf8');
@@ -53,10 +53,10 @@ describe('Witness Address', function() {
 
   // testnet p2Wsh
   var P2WSHTestnet = [
-    'tb1q9225pawdn2dlwsk3dd8phudsap6vjp7fhqj5wnrpg457qjq0ycvs6pluck',
-    'tb1q9225pawdn2dlwsk3dd8phudsap6vjp7fhqj5wnrpg457qjq0ycvq0qhyd9',
-    'tb1q9225pawdn2dlwsk3dd8phudsap6vjp7fhqj5wnrpg457qjq0ycts7qmgqy',
-    'tb1q9225pawdn2dlwsk3dd8phudsap6vjp7fhqj5wnrpg457qjq0yctqtpns4h'
+    'trdd1q9225pawdn2dlwsk3dd8phudsap6vjp7fhqj5wnrpg457qjq0ycvsrg4mlm',
+    'trdd1q9225pawdn2dlwsk3dd8phudsap6vjp7fhqj5wnrpg457qjq0ycvqkfar2g',
+    'trdd1q9225pawdn2dlwsk3dd8phudsap6vjp7fhqj5wnrpg457qjq0ycts8f308f',
+    'trdd1q9225pawdn2dlwsk3dd8phudsap6vjp7fhqj5wnrpg457qjq0yctqjgehj6'
   ];
 
   //livenet bad checksums
@@ -93,12 +93,12 @@ describe('Witness Address', function() {
 
   // testnet taproot valid
   var P2TRTestnet = [
-    'tb1pnuql3d5r8fpkezf9jyvfjcczrwtfjndksaquvfr782uf7xvmpeuqnqg5lk',
-    'tb1p6qef90ncxz25pq59c0dfjfezjlk5l0fq7n3w0axh63usmtugtvhqylnyxq',
-    'tb1palsux05ufcpg25al0krew5szfj03vejkqfxpz9kd26ghvruw33qq8q9ykg',
-    'tb1p9g2t30jj3djsn0tlaf6en2pq5qu7vgknyhjg3n54zcmglzy2t52qemw4dy',
-    'tb1pkadknwnukaxnpkg9wwp3430dd0w0shfw4f6ry3e68my0vyz3we5qh6qwhf',
-    'tb1pwjhr3ttlpvshcgrwz7h4asfusyj6angdxx2yvx6q8ds08upk699s44d4ck'
+    'trdd1pnuql3d5r8fpkezf9jyvfjcczrwtfjndksaquvfr782uf7xvmpeuq2fzncm',
+    'trdd1p6qef90ncxz25pq59c0dfjfezjlk5l0fq7n3w0axh63usmtugtvhqakerpd',
+    'trdd1palsux05ufcpg25al0krew5szfj03vejkqfxpz9kd26ghvruw33qq7f0r39',
+    'trdd1p9g2t30jj3djsn0tlaf6en2pq5qu7vgknyhjg3n54zcmglzy2t52qqjyj2f',
+    'trdd1pkadknwnukaxnpkg9wwp3430dd0w0shfw4f6ry3e68my0vyz3we5qwn2fsy',
+    'trdd1pwjhr3ttlpvshcgrwz7h4asfusyj6angdxx2yvx6q8ds08upk699svu8jlm'
   ];
 
   describe('validation', function() {

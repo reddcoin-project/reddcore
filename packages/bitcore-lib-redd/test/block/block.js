@@ -216,7 +216,7 @@ describe('Block', function() {
     it('roundtrips correctly', function() {
       var block = Block.fromBuffer(blockOneBuf);
       var obj = block.toObject();
-      var block2 = Block.fromObject(obj);  // Parsing the object will fail for block 1. BN cannot init the large satoshi value. todo
+      var block2 = Block.fromObject(obj);
       block2.toObject().should.deep.equal(block.toObject());
     });
 
