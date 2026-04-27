@@ -1,72 +1,72 @@
 'use strict';
 
-var bitcore = module.exports;
+var reddcore = module.exports;
 
 // module information
-bitcore.version = 'v' + require('./package.json').version;
-bitcore.versionGuard = function(version) {
+reddcore.version = 'v' + require('./package.json').version;
+reddcore.versionGuard = function(version) {
   if (version !== undefined) {
-    var message = 'More than one instance of bitcore-lib found. ' +
-      'Please make sure to require bitcore-lib and check that submodules do' +
-      ' not also include their own bitcore-lib dependency.';
+    var message = 'More than one instance of reddcore-lib found. ' +
+      'Please make sure to require reddcore-lib and check that submodules do' +
+      ' not also include their own reddcore-lib dependency.';
     throw new Error(message);
   }
 };
-bitcore.versionGuard(global._bitcore);
-global._bitcore = bitcore.version;
+reddcore.versionGuard(global._reddcore);
+global._reddcore = reddcore.version;
 
 // crypto
-bitcore.crypto = {};
-bitcore.crypto.BN = require('./lib/crypto/bn');
-bitcore.crypto.ECDSA = require('./lib/crypto/ecdsa');
-bitcore.crypto.Schnorr = require('./lib/crypto/schnorr');
-bitcore.crypto.Hash = require('./lib/crypto/hash');
-bitcore.crypto.Random = require('./lib/crypto/random');
-bitcore.crypto.Point = require('./lib/crypto/point');
-bitcore.crypto.Signature = require('./lib/crypto/signature');
-bitcore.crypto.TaggedHash = require('./lib/crypto/taggedhash');
+reddcore.crypto = {};
+reddcore.crypto.BN = require('./lib/crypto/bn');
+reddcore.crypto.ECDSA = require('./lib/crypto/ecdsa');
+reddcore.crypto.Schnorr = require('./lib/crypto/schnorr');
+reddcore.crypto.Hash = require('./lib/crypto/hash');
+reddcore.crypto.Random = require('./lib/crypto/random');
+reddcore.crypto.Point = require('./lib/crypto/point');
+reddcore.crypto.Signature = require('./lib/crypto/signature');
+reddcore.crypto.TaggedHash = require('./lib/crypto/taggedhash');
 
 // encoding
-bitcore.encoding = {};
-bitcore.encoding.Base58 = require('./lib/encoding/base58');
-bitcore.encoding.Base58Check = require('./lib/encoding/base58check');
-bitcore.encoding.BufferReader = require('./lib/encoding/bufferreader');
-bitcore.encoding.BufferWriter = require('./lib/encoding/bufferwriter');
-bitcore.encoding.Varint = require('./lib/encoding/varint');
+reddcore.encoding = {};
+reddcore.encoding.Base58 = require('./lib/encoding/base58');
+reddcore.encoding.Base58Check = require('./lib/encoding/base58check');
+reddcore.encoding.BufferReader = require('./lib/encoding/bufferreader');
+reddcore.encoding.BufferWriter = require('./lib/encoding/bufferwriter');
+reddcore.encoding.Varint = require('./lib/encoding/varint');
 
 // utilities
-bitcore.util = {};
-bitcore.util.buffer = require('./lib/util/buffer');
-bitcore.util.js = require('./lib/util/js');
-bitcore.util.preconditions = require('./lib/util/preconditions');
+reddcore.util = {};
+reddcore.util.buffer = require('./lib/util/buffer');
+reddcore.util.js = require('./lib/util/js');
+reddcore.util.preconditions = require('./lib/util/preconditions');
 
 // errors thrown by the library
-bitcore.errors = require('./lib/errors');
+reddcore.errors = require('./lib/errors');
 
 // main bitcoin library
-bitcore.Address = require('./lib/address');
-bitcore.Block = require('./lib/block');
-bitcore.MerkleBlock = require('./lib/block/merkleblock');
-bitcore.BlockHeader = require('./lib/block/blockheader');
-bitcore.HDPrivateKey = require('./lib/hdprivatekey.js');
-bitcore.HDPublicKey = require('./lib/hdpublickey.js');
-bitcore.Message = require('./lib/message');
-bitcore.Networks = require('./lib/networks');
-bitcore.Opcode = require('./lib/opcode');
-bitcore.PrivateKey = require('./lib/privatekey');
-bitcore.PublicKey = require('./lib/publickey');
-bitcore.Script = require('./lib/script');
-bitcore.Transaction = require('./lib/transaction');
-bitcore.URI = require('./lib/uri');
-bitcore.Unit = require('./lib/unit');
+reddcore.Address = require('./lib/address');
+reddcore.Block = require('./lib/block');
+reddcore.MerkleBlock = require('./lib/block/merkleblock');
+reddcore.BlockHeader = require('./lib/block/blockheader');
+reddcore.HDPrivateKey = require('./lib/hdprivatekey.js');
+reddcore.HDPublicKey = require('./lib/hdpublickey.js');
+reddcore.Message = require('./lib/message');
+reddcore.Networks = require('./lib/networks');
+reddcore.Opcode = require('./lib/opcode');
+reddcore.PrivateKey = require('./lib/privatekey');
+reddcore.PublicKey = require('./lib/publickey');
+reddcore.Script = require('./lib/script');
+reddcore.Transaction = require('./lib/transaction');
+reddcore.URI = require('./lib/uri');
+reddcore.Unit = require('./lib/unit');
 
 // dependencies, subject to change
-bitcore.deps = {};
-bitcore.deps.bnjs = require('bn.js');
-bitcore.deps.bs58 = require('bs58');
-bitcore.deps.Buffer = Buffer;
-bitcore.deps.elliptic = require('elliptic');
-bitcore.deps._ = require('lodash');
+reddcore.deps = {};
+reddcore.deps.bnjs = require('bn.js');
+reddcore.deps.bs58 = require('bs58');
+reddcore.deps.Buffer = Buffer;
+reddcore.deps.elliptic = require('elliptic');
+reddcore.deps._ = require('lodash');
 
 // Internal usage, exposed for testing/advanced tweaking
-bitcore.Transaction.sighash = require('./lib/transaction/sighash');
+reddcore.Transaction.sighash = require('./lib/transaction/sighash');
