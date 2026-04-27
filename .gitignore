@@ -19,3 +19,6 @@ Session.vim
 *~
 ts_build
 bitcore-lib.js
+
+# npm pack output (smoke-test artefacts)
+*.tgz
