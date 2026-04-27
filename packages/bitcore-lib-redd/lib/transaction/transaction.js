@@ -1557,6 +1557,14 @@ Transaction.prototype.isCoinbase = function() {
 };
 
 /**
+ * Analogous to bitcoind's IsCoinStake function in transaction.h
+ */
+Transaction.prototype.isCoinStake = function() {
+  return this.inputs.length > 0 && !this.inputs[0].isNull() &&
+    this.outputs.length >=2 && this.outputs[0].isNull();
+};
+
+/**
  * Determines if this transaction can be replaced in the mempool with another
  * transaction that provides a sufficiently higher fee (RBF).
  */

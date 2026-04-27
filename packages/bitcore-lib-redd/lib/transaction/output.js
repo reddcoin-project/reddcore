@@ -164,6 +164,10 @@ Output.prototype.inspect = function() {
   return '<Output (' + this.satoshis + ' sats) ' + scriptStr + '>';
 };
 
+Output.prototype.isNull = function() {
+  return this.satoshis === 0 || this.script === null;
+};
+
 Output.fromBufferReader = function(br) {
   var obj = {};
   obj.satoshis = br.readUInt64LEBN();
