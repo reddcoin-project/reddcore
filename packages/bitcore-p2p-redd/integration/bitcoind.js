@@ -2,7 +2,7 @@
 
 const chai = require('chai');
 const sinon = require('sinon');
-const bitcore = require('@bitpay-labs/bitcore-lib');
+const bitcore = require('@reddcoinproject/bitcore-lib-redd');
 const p2p = require('../');
 
 const should = chai.should();

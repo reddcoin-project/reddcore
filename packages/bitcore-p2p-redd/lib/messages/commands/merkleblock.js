@@ -2,7 +2,7 @@
 
 const Message = require('../message');
 const inherits = require('util').inherits;
-const bitcore = require('@bitpay-labs/bitcore-lib');
+const bitcore = require('@reddcoinproject/bitcore-lib-redd');
 
 const BufferUtil = bitcore.util.buffer;
 const $ = bitcore.util.preconditions;

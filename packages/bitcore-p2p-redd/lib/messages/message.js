@@ -1,6 +1,6 @@
 'use strict';
 
-const bitcore = require('@bitpay-labs/bitcore-lib');
+const bitcore = require('@reddcoinproject/bitcore-lib-redd');
 
 const $ = bitcore.util.preconditions;
 const BufferWriter = bitcore.encoding.BufferWriter;

@@ -7,7 +7,7 @@ The quickest way to get connected is to run the following:
 ```javascript
 
 var Pool = require('@bitpay-labs/bitcore-p2p').Pool;
-var Networks = require('@bitpay-labs/bitcore-lib').Networks;
+var Networks = require('@reddcoinproject/bitcore-lib-redd').Networks;
 
 var pool = new Pool({network: Networks.livenet});
 
