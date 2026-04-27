@@ -82,7 +82,7 @@ function sighash(transaction, sighashType, inputNumber, subscript) {
   }
 
   const buf = new BufferWriter()
-    .write(txcopy.toBuffer())
+    .write(txcopy.toSigningBuffer())
     .writeInt32LE(sighashType)
     .toBuffer();
   let ret = Hash.sha256sha256(buf);

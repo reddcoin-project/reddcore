@@ -378,6 +378,47 @@ Transaction.prototype.toBufferWriter = function(writer, noWitness) {
   return writer;
 };
 
+Transaction.prototype.toSigningBuffer = function(noWitness) {
+  var writer = new BufferWriter();
+  return this.toSigningBufferWriter(writer, noWitness).toBuffer();
+};
+
+Transaction.prototype.toSigningBufferWriter = function(writer, noWitness) {
+  writer.writeInt32LE(this.version);
+
+  var hasWitnesses = this.hasWitnesses();
+
+  if (hasWitnesses && !noWitness) {
+    writer.write(Buffer.from('0001', 'hex'));
+  }
+
+  writer.writeVarintNum(this.inputs.length);
+
+  _.each(this.inputs, function(input) {
+    input.toBufferWriter(writer);
+  });
+
+  writer.writeVarintNum(this.outputs.length);
+  _.each(this.outputs, function(output) {
+    output.toBufferWriter(writer);
+  });
+
+  if (hasWitnesses && !noWitness) {
+    _.each(this.inputs, function(input) {
+      var witnesses = input.getWitnesses();
+      writer.writeVarintNum(witnesses.length);
+      for (var j = 0; j < witnesses.length; j++) {
+        writer.writeVarintNum(witnesses[j].length);
+        writer.write(witnesses[j]);
+      }
+    });
+  }
+
+  writer.writeUInt32LE(this.nLockTime);
+
+  return writer;
+};
+
 Transaction.prototype.fromBuffer = function(buffer) {
   var reader = new BufferReader(buffer);
   return this.fromBufferReader(reader);
