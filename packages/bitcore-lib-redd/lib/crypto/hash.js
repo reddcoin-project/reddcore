@@ -83,3 +83,22 @@ Hash.sha256hmac = function(data, key) {
 Hash.sha512hmac = function(data, key) {
   return Hash.hmac(Hash.sha512, data, key);
 };
+
+/**
+ * Format a block hash like the official client does.
+ */
+Hash.formatHash = function(hash) {
+  var hashEnd = new Buffer.alloc(10);
+  hash.copy(hashEnd, 0, 22, 32);
+  return BufferUtil.reverse(hashEnd).toString('hex');
+};
+
+/**
+ * Display the whole hash, as hex, in correct endian order.
+ */
+Hash.formatHashFull = function(hash) {
+  var copy = new Buffer.alloc(hash.length);
+  hash.copy(copy);
+  var hex = BufferUtil.reverse(copy).toString('hex');
+  return hex;
+};
