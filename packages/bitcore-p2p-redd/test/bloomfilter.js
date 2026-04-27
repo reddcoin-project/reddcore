@@ -36,7 +36,7 @@ describe('BloomFilter', function() {
 
   it('serialize filter with public keys added', function() {
 
-    var privateKey = bitcore.PrivateKey.fromWIF('5Kg1gnAjaLfKiwhhPpGS3QfRg2m6awQvaj98JCZBZQ5SuS2F15C');
+    var privateKey = bitcore.PrivateKey.fromWIF('7NFRSvYgZHv8wz9ihB8PDyEfXzKuEtpLaiThBLWsCNV71Px92iX');
     var publicKey = privateKey.toPublicKey();
 
     var filter = BloomFilter.create(2, 0.001, 0, BloomFilter.BLOOM_UPDATE_ALL);

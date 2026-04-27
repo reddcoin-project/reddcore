@@ -55,11 +55,7 @@ AddrMessage.prototype.getPayload = function() {
 
   for (var i = 0; i < this.addresses.length; i++) {
     var addr = this.addresses[i];
-    // reddcoin's addr message uses an 8-byte little-endian timestamp
-    // (high 4 bytes always zero in practice — it's still a unix epoch in seconds)
-    var timestampBuffer = Buffer.alloc(8);
-    timestampBuffer.writeUInt32LE(addr.time.getTime() / 1000);
-    bw.write(timestampBuffer);
+    bw.writeUInt32LE(addr.time.getTime() / 1000);
     utils.writeAddr(addr, bw);
   }
 

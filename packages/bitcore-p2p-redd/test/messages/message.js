@@ -32,7 +32,7 @@ describe('Message', function() {
         return Buffer.alloc(0);
       };
       const buffer = message.toBuffer();
-      const expectedBuffer = Buffer.from('f9beb4d9636f6d6d616e640000000000000000005df6e0e2', 'hex');
+      const expectedBuffer = Buffer.from('fbc0b6db636f6d6d616e640000000000000000005df6e0e2', 'hex');
       buffer.should.deep.equal(expectedBuffer);
     });
   });
