@@ -28,6 +28,7 @@ var Output = require('./output');
 var Script = require('../script');
 var PrivateKey = require('../privatekey');
 var BN = require('../crypto/bn');
+var timeUtil = require('../util/time');
 
 /**
  * Represents a transaction, a set of inputs and outputs to change ownership of tokens
@@ -641,7 +642,7 @@ Transaction.prototype.fromString = function(string) {
 Transaction.prototype._newTransaction = function() {
   this.version = CURRENT_VERSION;
   this.nLockTime = DEFAULT_NLOCKTIME;
-  this.nTime = 0;
+  this.nTime = timeUtil.currentTime();
 };
 
 /* Transaction creation interface */
