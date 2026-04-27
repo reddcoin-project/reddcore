@@ -13,7 +13,7 @@ module.exports = [
     internal_key : 'cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115',
     output_key   : 'a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc487053f1dc6880949dc684c',
     scriptPubKey : '5120a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc487053f1dc6880949dc684c',
-    address      : 'bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr',
+    address      : 'rdd1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqnh4465',
   },
 
   // Account 0, second receiving address = m/86'/0'/0'/0/1
@@ -24,9 +24,9 @@ module.exports = [
     internal_key : '83dfe85a3151d2517290da461fe2815591ef69f2b18a2ce63f01697a8b313145',
     output_key   : 'a82f29944d65b86ae6b5e5cc75e294ead6c59391a1edc5e016e3498c67fc7bbb',
     scriptPubKey : '5120a82f29944d65b86ae6b5e5cc75e294ead6c59391a1edc5e016e3498c67fc7bbb',
-    address      : 'bc1p4qhjn9zdvkux4e44uhx8tc55attvtyu358kutcqkudyccelu0was9fqzwh',
+    address      : 'rdd1p4qhjn9zdvkux4e44uhx8tc55attvtyu358kutcqkudyccelu0wasq8c5vq',
   },
-  
+
   // Account 0, first change address = m/86'/0'/0'/1/0
   {
     path         : "m/86'/0'/0'/1/0",
@@ -35,6 +35,6 @@ module.exports = [
     internal_key : '399f1b2f4393f29a18c937859c5dd8a77350103157eb880f02e8c08214277cef',
     output_key   : '882d74e5d0572d5a816cef0041a96b6c1de832f6f9676d9605c44d5e9a97d3dc',
     scriptPubKey : '5120882d74e5d0572d5a816cef0041a96b6c1de832f6f9676d9605c44d5e9a97d3dc',
-    address      : 'bc1p3qkhfews2uk44qtvauqyr2ttdsw7svhkl9nkm9s9c3x4ax5h60wqwruhk7',
+    address      : 'rdd1p3qkhfews2uk44qtvauqyr2ttdsw7svhkl9nkm9s9c3x4ax5h60wqtdyp5f',
   }
 ];

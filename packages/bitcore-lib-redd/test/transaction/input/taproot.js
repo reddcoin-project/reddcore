@@ -12,13 +12,13 @@ const Networks = bitcore.Networks;
 
 describe('TaprootInput', function() {
 
-  const privateKey = new PrivateKey('KwF9LjRraetZuEjR8VqEq539z137LW5anYDUnVK11vM3mNMHTWb4');
+  const privateKey = new PrivateKey('UxbB4W72649zAoWBXKbnTtt437yHn6FPmVjdkrUtoSSXE4gwagjA');
   const publicKey = privateKey.publicKey;
   const address = new Address(publicKey, Networks.livenet);
   const taprootAddress = new Address(publicKey, Networks.livenet, Address.PayToTaproot);
 
   const output = {
-    address: '33zbk2aSZYdNbRsMPPt6jgy6Kq1kQreqeb',
+    address: '3LRW7jeCvQCRdPF8S3yUCfRAx4eqXFmdcr',
     txId: '66e64ef8a3b384164b78453fa8c8194de9a473ba14f89485a0e433699daec140',
     outputIndex: 0,
     script: new Script(address),
@@ -26,7 +26,7 @@ describe('TaprootInput', function() {
   };
 
   const taprootOutput = {
-    address: 'bc1pnupe39s4phnjvsta2u0df59ky85mt4rjxjmpp8xnf3mga8dw9r0sptzca0',
+    address: 'rdd1pmfr3p9j00pfxjh0zmgp99y8zftmd3s5pmedqhyptwy6lm87hf5ssyctw5j',
     txId: '66e64ef8a3b384164b78453fa8c8194de9a473ba14f89485a0e433699daec140',
     outputIndex: 0,
     script: new Script(taprootAddress),

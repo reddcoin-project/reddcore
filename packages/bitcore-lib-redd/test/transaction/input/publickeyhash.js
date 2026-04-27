@@ -15,7 +15,7 @@ var Signature = bitcore.crypto.Signature;
 
 describe('PublicKeyHashInput', function() {
 
-  var privateKey = new PrivateKey('KwF9LjRraetZuEjR8VqEq539z137LW5anYDUnVK11vM3mNMHTWb4');
+  var privateKey = new PrivateKey('UxccDaQjG2mxLoYGs7uiPgosAWHuG2cviVDRvCSmy7KTwZVEfnaw');
   var publicKey = privateKey.publicKey;
   var address = new Address(publicKey, Networks.livenet);
   var witnessAddress = new Address(publicKey, Networks.livenet, Address.PayToWitnessPublicKeyHash);
@@ -30,7 +30,7 @@ describe('PublicKeyHashInput', function() {
   };
 
   var witnessOutput = {
-    address: 'bc1q4fyv6yjgj6kjgv5ccnfhqcv0ydft2z6h9xf0xw',
+    address: 'rdd1qnt9w6y8wzt77lsy4avq7azgvdtjeqvxz4at8ay',
     txId: '66e64ef8a3b384164b78453fa8c8194de9a473ba14f89485a0e433699daec140',
     outputIndex: 0,
     script: new Script(witnessAddress),

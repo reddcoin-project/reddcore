@@ -15,9 +15,9 @@ var MultiSigInput = bitcore.Transaction.Input.MultiSig;
 
 describe('MultiSigInput', function() {
 
-  var privateKey1 = new PrivateKey('KwF9LjRraetZuEjR8VqEq539z137LW5anYDUnVK11vM3mNMHTWb4');
-  var privateKey2 = new PrivateKey('L4PqnaPTCkYhAqH3YQmefjxQP6zRcF4EJbdGqR8v6adtG9XSsadY');
-  var privateKey3 = new PrivateKey('L4CTX79zFeksZTyyoFuPQAySfmP7fL3R41gWKTuepuN7hxuNuJwV');
+  var privateKey1 = new PrivateKey('UxccDaQjG2mxLoYGs7uiPgosAWHuG2cviVDRvCSmy7KTwZVEfnaw');
+  var privateKey2 = new PrivateKey('V5mJfRNKt8S5cQ5uH2r8EMj7ZcFDXmbaEYdDy8Gh3mcJSLcYk98d');
+  var privateKey3 = new PrivateKey('V5ZvPx8rw2eG12nqXsyrxnk9rGduarakyxgTTB3Rn6LXtA1qXPXU');
   var public1 = privateKey1.publicKey;
   var public2 = privateKey2.publicKey;
   var public3 = privateKey3.publicKey;

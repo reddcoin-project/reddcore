@@ -231,14 +231,15 @@ describe('Transaction', function() {
   });
 
   // testnet tx 2035ead4a9d0c8e2da1184924abc9034d26f2a7093371183ef12891623b235d1
-  const taprootTx = '02000000000102c1d8527f83a3061536d394cf50c476c60e885986b047d0d553c59f7a703cab700100000000fdffffffb843817220dc08b9f008207b5ea2591c26ce0ad5b3f842b934d9f0635a252d630000000000fdffffff02a086010000000000225120a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc487053f1dc6880949dc684c6a720000000000001600141eadc6c059a0485e0f8cfff955be4f5a544f514d024730440220776ecbb80e66ada7fe379c93c790303a33c11e3e888e41c991bcdae7d7531487022022ff85dc93a45941b4941484c46b515a476a2f2ab4ccb7dfd243eaadeed05036012103e9f41161bafb6a4e54a9ad29a68cdb3194e4d98b784a1ebcafa0055eb7310c810247304402206b275c62d21aa152323cac83e037f660865ef2a3bc73cc208bdc275643291b6f0220257249964a0e42ced656f74247683b70249f0d65da50532a3d9a5c4df12a531401210332fe2e5317637bed2153bee395facec6a245b98831e5a5d8f7af091371e67264aa7f1f00';
+  // Hex extended with trailing 4-byte nTime=0 because reddcoin v2 txs serialise nTime.
+  const taprootTx = '02000000000102c1d8527f83a3061536d394cf50c476c60e885986b047d0d553c59f7a703cab700100000000fdffffffb843817220dc08b9f008207b5ea2591c26ce0ad5b3f842b934d9f0635a252d630000000000fdffffff02a086010000000000225120a60869f0dbcf1dc659c9cecbaf8050135ea9e8cdc487053f1dc6880949dc684c6a720000000000001600141eadc6c059a0485e0f8cfff955be4f5a544f514d024730440220776ecbb80e66ada7fe379c93c790303a33c11e3e888e41c991bcdae7d7531487022022ff85dc93a45941b4941484c46b515a476a2f2ab4ccb7dfd243eaadeed05036012103e9f41161bafb6a4e54a9ad29a68cdb3194e4d98b784a1ebcafa0055eb7310c810247304402206b275c62d21aa152323cac83e037f660865ef2a3bc73cc208bdc275643291b6f0220257249964a0e42ced656f74247683b70249f0d65da50532a3d9a5c4df12a531401210332fe2e5317637bed2153bee395facec6a245b98831e5a5d8f7af091371e67264aa7f1f0000000000';
   it('deserializes and serializes a taproot tx', function() {
     const tx = new Transaction(taprootTx);
     tx.should.exist;
     const script = new Script(tx.outputs[0]._scriptBuffer);
     const addy = script.toAddress('testnet');
     const addyString = addy.toString();
-    addyString.should.equal('tb1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqp3mvzv');
+    addyString.should.equal('trdd1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqcc3t9p');
     const reserialized = tx.uncheckedSerialize();
     reserialized.should.equal(taprootTx);
   });
@@ -251,7 +252,8 @@ describe('Transaction', function() {
       it('case ' + index, function() {
         var i = 0;
         var transaction = new Transaction();
-        transaction.setVersion(1);
+        transaction.setVersion(2);
+        transaction.nTime = 1723683998;
         while (i < vector.length) {
           var command = vector[i];
           var args = vector[i + 1];
@@ -275,7 +277,7 @@ describe('Transaction', function() {
   var public2 = new PrivateKey(private2).publicKey;
 
   var fromAddress = 'mszYqVnqKoQx4jcTdJXxwKAissE3Jbrrc1';
-  var witnessFromAddress = 'tb1q3rvex84884sw4al9vu00cp2jhyffz8e2n2k4wp';
+  var witnessFromAddress = 'trdd1q3rvex84884sw4al9vu00cp2jhyffz8e2jkm8g7';
   var wrappedWitnessFromAddress = '2N2fk5hPbAPaMUs5No2kwy6xLdFL3CjUXMy';
   var simpleUtxoWith100000Satoshis = {
     address: fromAddress,
@@ -297,7 +299,7 @@ describe('Transaction', function() {
   var toAddress = 'mrU9pEmAx26HcbKVrABvgL7AwA5fjNFoDc';
   var changeAddress = 'mgBCJAsvzgT2qNNeXsoECg2uPKrUsZ76up';
   var changeAddressP2SH = '2N7T3TAetJrSCruQ39aNrJvYLhG1LJosujf';
-  var changeAddressP2WPKH = 'tb1q3rvex84884sw4al9vu00cp2jhyffz8e2n2k4wp';
+  var changeAddressP2WPKH = 'trdd1qt37dc0yj6rr79jq8223xtzxan72kwd5tfnjrtm';
   var changeAddressP2WSH = 'tb1qk0jhwmn65dqmlp755a7cff40fnvzsnhzq290kezrfs9d308an3tqlpjvad';
 
   var simpleUtxoWith1BTC = {
@@ -451,7 +453,7 @@ describe('Transaction', function() {
         .change(changeAddress)
         .sign(privateKey);
       transaction.outputs.length.should.equal(2);
-      transaction.outputs[1].satoshis.should.equal(477400);
+      transaction.outputs[1].satoshis.should.equal(477000);
       transaction.outputs[1].script.toString()
         .should.equal(Script.fromAddress(changeAddress).toString());
       var actual = transaction.getChangeOutput().script.toString();
@@ -551,7 +553,7 @@ describe('Transaction', function() {
         .sign(privateKey);
       transaction._estimateSize().should.be.within(1000, 1999);
       transaction.outputs.length.should.equal(2);
-      transaction.outputs[1].satoshis.should.equal(37536);
+      transaction.outputs[1].satoshis.should.equal(37504);
     });
     it('fee per byte (low fee) can be set up manually', function () {
       var inputs = new Array(10).fill(0).map(function(_, i) {
@@ -1183,7 +1185,7 @@ describe('Transaction', function() {
         .change(changeAddress)
         .to(toAddress, 1000);
       transaction.inputAmount.should.equal(100000000);
-      transaction.outputAmount.should.equal(99977400);
+      transaction.outputAmount.should.equal(99977000);
     });
     it('returns correct values for coinjoin transaction', function() {
       // see livenet tx c16467eea05f1f30d50ed6dbc06a38539d9bb15110e4b7dc6653046a3678a718
@@ -1275,7 +1277,7 @@ describe('Transaction', function() {
       tx.outputs.length.should.equal(2);
       tx.outputs[0].satoshis.should.equal(10000000);
       tx.outputs[0].script.toAddress().toString().should.equal(toAddress);
-      tx.outputs[1].satoshis.should.equal(89977400);
+      tx.outputs[1].satoshis.should.equal(89977000);
       tx.outputs[1].script.toAddress().toString().should.equal(changeAddress);
     });
 
@@ -2015,16 +2017,16 @@ describe('Transaction', function() {
 
     it('should correctly calculation the size for a segwit tx', function() {
       const t = new Transaction('020000000001015f8aa587aba19d10a1f12cd67ea3065a6eafa009ccec529597c2021cbf96e5700000000000fdffffff0280a4bf070000000016001498b78eb72df917e39769e68e9390aed719704dc958963e22010000001600141ebe37ae991227a14811cb674bd7f0f93d96a25f024730440220346178b20de865664c3c82cdf2e6ec5774995dba6854f83d5fd5d5e96f255d2902206e088257e59593365ac33334e7f2d9600d2ea69923146bfea41b0692c1e55f720121039a973d562a9efd1a55b2d12fe966529df75f31e1892cc15892ba956d96dc4d1d71000000');
-      t.size.should.equal(222);
-      t.vsize.should.equal(141);
-      t.weight.should.equal(561);
+      t.size.should.equal(226);
+      t.vsize.should.equal(145);
+      t.weight.should.equal(577);
     });
 
     it('should correctly calculation the size for a segwit tx with a mix', function() {
       const t = new Transaction('02000000000104cdcdb3429edd6c3a35455c167fc94c7f942cbf6f43f72f295eb3221bff1709a41d00000017160014cbb96e3fff893ca4cc5b30b6140ba633e0684ce5ffffffffdcd8ce8c29596a4100f1092e9fd7ca8c76bd45f4ed3e0188d03daa26b4b57e330500000017160014cbb96e3fff893ca4cc5b30b6140ba633e0684ce5ffffffffde5c954662d037991eea5e4d8c40c2903bebc39128454e5cf22512f3aaff9b740100000000ffffffff127bdd6f71479358fde9548f8c8e41427cfc91793c37c595d7eb1f157d739c3d0300000017160014cbb96e3fff893ca4cc5b30b6140ba633e0684ce5ffffffff07b00400000000000017a9148824d50f1e006a193d42b3e8f1b0e11411580a2c872202000000000000225120c4c57de58f78d4cb47b0a9c60e59f1a160914bcd0a405d8f4e1f23955d126dc14691150000000000225120b2a66b5e9dc1fd44ef8313d4970d6233a2c4cc2d6e77e2a749d3f585dd664434ac8a00000000000017a914ea6b832a05c6ca578baa3836f3f25553d41068a587580200000000000017a9148824d50f1e006a193d42b3e8f1b0e11411580a2c87580200000000000017a9148824d50f1e006a193d42b3e8f1b0e11411580a2c87a7c30a000000000017a9148824d50f1e006a193d42b3e8f1b0e11411580a2c8702483045022100bf84301a15e8ff8c54a29bd3c020eaa1c0e709a7e3c15461a9def844797e54f302206e449429f665b9df45444ac49ae978ece2b5183f60757a6b72812b35054c03fb01210323dbb07eb97d1524cb43ae68abdea9816346e5bfe0873d3451bcb31d58be7d7502483045022100805d548559ab39d4bec4b5efdf624a62149fb1e3471a937f22219b4a49583183022039e56d63ad4edb39aca4477e5d59c7ea6f0e9e267116ce6e03e4024a15da907201210323dbb07eb97d1524cb43ae68abdea9816346e5bfe0873d3451bcb31d58be7d7501413179caa8aef69cc3f9afb4b60283c25a4b9184f800206c5cc1761a8f341d2d61d9bb52566e71f760b0d533ba88b0affc4009c44152485a10e32c839348455c42830247304402203b443cfd56c665bf9798d24e536bee9b69b2c9f7d3daab45a31ab3eb94d1cf8a0220585ae75835aba95d4f63141dba75c3f36a3996cd6c2c1167244326fcd345fd5201210323dbb07eb97d1524cb43ae68abdea9816346e5bfe0873d3451bcb31d58be7d7500000000');
-      t.size.should.equal(881);
-      t.vsize.should.equal(587);
-      t.weight.should.equal(2348);
+      t.size.should.equal(885);
+      t.vsize.should.equal(591);
+      t.weight.should.equal(2364);
     });
   });
 
@@ -2169,11 +2171,11 @@ describe('Transaction', function() {
               t.inputs[i].setWitnesses(tf.inputs[i].witnesses);
             } else {
               t.inputs[i].setScript(tf.inputs[i].script);
-            }            
+            }
           }
         }
         t.isFullySigned().should.equal(true);
-        t.hash.should.equal('fea03dc5c362e2ebd71f90960803aaa2cdbbc6cd536135f49980afedc19e3552');
+        t.hash.should.equal('dfb427d31ac5496ab97e08723f949a0b235153b1864a354273c4860eee11b4ac');
         expect(t.serialize({ disableLargeFees: true })).to.exist;
       });
     }
@@ -2290,12 +2292,12 @@ describe('Transaction', function() {
       t.inputs[0].isValidSignature(t, { signature: Signature.fromSchnorr(manualSig) }).should.equal(true);
     });
   });
-
 });
 
 
+/* jshint maxlen: 1000 */
 const tx_empty_hex = '01000000000000000000';
-const tx_empty_hexV2 = '02000000000000000000';
+const tx_empty_hexV2 = '0200000000000000000000000000';
 const tx_1_hex = '01000000015884e5db9de218238671572340b207ee85b628074e7e467096c267266baf77a4000000006a473044022013fa3089327b50263029265572ae1b022a91d10ac80eb4f32f291c914533670b02200d8a5ed5f62634a7e1a0dc9188a3cc460a986267ae4d58faf50c79105431327501210223078d2942df62c45621d209fab84ea9a7a23346201b7727b9b45a29c4e76f5effffffff0150690f00000000001976a9147821c0a3768aa9d1a37e16cf76002aef5373f1a888ac00000000';
 const tx_1_id = '779a3e5b3c2c452c85333d8521f804c1a52800e60f4b7c3bbe36f4bab350b72c';
 const tx2hex = '0100000001e07d8090f4d4e6fcba6a2819e805805517eb19e669e9d2f856b41d4277953d640000000091004730440220248bc60bb309dd0215fbde830b6371e3fdc55685d11daa9a3c43828892e26ce202205f10cd4011f3a43657260a211f6c4d1fa81b6b6bdd6577263ed097cc22f4e5b50147522102fa38420cec94843ba963684b771ba3ca7ce1728dc2c7e7cade0bf298324d6b942103f948a83c20b2e7228ca9f3b71a96c2f079d9c32164cd07f08fbfdb483427d2ee52aeffffffff01180fe200000000001976a914ccee7ce8e8b91ec0bc23e1cfb6324461429e6b0488ac00000000';
