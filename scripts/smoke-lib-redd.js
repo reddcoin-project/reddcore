@@ -57,6 +57,15 @@ check('Output.isNull exists', typeof reddcore.Transaction.Output.prototype.isNul
 console.log('=== Transaction coinstake helper ===');
 check('Transaction.isCoinStake exists', typeof reddcore.Transaction.prototype.isCoinStake === 'function');
 
+console.log('=== Unit (RDD) ===');
+const Unit = reddcore.Unit;
+check('Unit.RDD constant', Unit.RDD === 'RDD');
+check('Unit.mRDD constant', Unit.mRDD === 'mRDD');
+check('Unit.fromRDD is a function', typeof Unit.fromRDD === 'function');
+check('Unit.fromRDD(1).toSatoshis() === 1e8', Unit.fromRDD(1).toSatoshis() === 1e8);
+check('Unit.fromSatoshis(1e8).toRDD() === 1', Unit.fromSatoshis(1e8).toRDD() === 1);
+check('Old BTC API removed', Unit.BTC === undefined);
+
 console.log();
 console.log('lib-redd: ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail > 0 ? 1 : 0);

@@ -52,7 +52,7 @@
           }
         }
       },
-      "REDD": {
+      "RDD": {
         "mainnet": {
           "module": "./modules/reddcoin",
           "chainSource": "p2p",

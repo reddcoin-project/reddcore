@@ -1,6 +1,6 @@
 # Encoding
 
-The `bitcore.Encoding` namespace contains utilities for encoding information in common formats in the bitcoin ecosystem.
+The `bitcore.Encoding` namespace contains utilities for encoding information in common formats in the reddcoin ecosystem.
 
 ## Base58 & Base58Check
 

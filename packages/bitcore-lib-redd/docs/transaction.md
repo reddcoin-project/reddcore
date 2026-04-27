@@ -1,10 +1,10 @@
 # Transaction
 
-Bitcore JavaScript Library provides a very simple API for creating transactions. We expect this API to be accessible for developers without knowing the working internals of bitcoin in deep detail. What follows is a small introduction to transactions with some basic knowledge required to use this API.
+Bitcore JavaScript Library provides a very simple API for creating transactions. We expect this API to be accessible for developers without knowing the working internals of reddcoin in deep detail. What follows is a small introduction to transactions with some basic knowledge required to use this API.
 
 A Transaction contains a set of inputs and a set of outputs. Each input contains a reference to another transaction's output, and a signature that allows the value referenced in that output to be used in this transaction.
 
-Note also that an output can be used only once. That's why there's a concept of "change address" in the bitcoin ecosystem: if an output of 10 BTC is available for me to spend, but I only need to transmit 1 BTC, I'll create a transaction with two outputs, one with 1 BTC that I want to spend, and the other with 9 BTC to a change address, so I can spend this 9 BTC with another private key that I own.
+Note also that an output can be used only once. That's why there's a concept of "change address" in the reddcoin ecosystem: if an output of 10 RDD is available for me to spend, but I only need to transmit 1 RDD, I'll create a transaction with two outputs, one with 1 RDD that I want to spend, and the other with 9 RDD to a change address, so I can spend this 9 RDD with another private key that I own.
 
 So, in order to transmit a valid transaction, you must know what other transactions on the network store outputs that have not been spent and that are available for you to spend (meaning that you have the set of keys that can validate you own those funds). The unspent outputs are usually referred to as "utxo"s.
 
@@ -20,17 +20,17 @@ var transaction = new Transaction()
 
 You can obtain the input and output total amounts of the transaction in satoshis by accessing the fields `inputAmount` and `outputAmount`.
 
-Now, this could just be serialized to hexadecimal ASCII values (`transaction.serialize()`) and sent over to the bitcoind reference client.
+Now, this could just be serialized to hexadecimal ASCII values (`transaction.serialize()`) and sent over to the reddcoind reference client.
 
 ```sh
-bitcoin-cli sendrawtransaction <serialized transaction>
+reddcoin-cli sendrawtransaction <serialized transaction>
 ```
 
 You can also override the fee estimation with another amount, specified in satoshis:
 
 ```javascript
 var transaction = new Transaction().fee(5430); // Minimum non-dust amount
-var transaction = new Transaction().fee(1e8);  // Generous fee of 1 BTC
+var transaction = new Transaction().fee(1e8);  // Generous fee of 1 RDD
 ```
 
 ## Multisig Transactions
@@ -78,7 +78,7 @@ transaction.applySignature(receivedSig);
 
 ## Adding inputs
 
-Transaction inputs are instances of either [Input](https://github.com/bitpay/bitcore/blob/master/packages/bitcore-lib/lib/transaction/input/input.js) or its subclasses. `Input` has some abstract methods, as there is no actual concept of a "signed input" in the bitcoin scripting system (just valid signatures for <tt>OP_CHECKSIG</tt> and similar opcodes). They are stored in the `input` property of `Transaction` instances.
+Transaction inputs are instances of either [Input](https://github.com/reddcoin-project/reddcore/blob/master/packages/bitcore-lib-redd/lib/transaction/input/input.js) or its subclasses. `Input` has some abstract methods, as there is no actual concept of a "signed input" in the reddcoin scripting system (just valid signatures for <tt>OP_CHECKSIG</tt> and similar opcodes). They are stored in the `input` property of `Transaction` instances.
 
 Bitcore contains two implementations of `Input`, one for spending _Pay to Public Key Hash_ outputs (called `PublicKeyHashInput`) and another to spend _Pay to Script Hash_ outputs for which the redeem script is a Multisig script (called `MultisigScriptHashInput`).
 
@@ -86,8 +86,8 @@ All inputs have the following five properties:
 
 - `prevTxId`: a `Buffer` with the id of the transaction with the output this input is spending
 - `outputIndex`: a `number` the index of the output in the previous transaction
-- `sequenceNumber`: a `number`, the sequence number, see [bitcoin's developer guide on nLockTime and the sequence number](https://developer.bitcoin.org/devguide/transactions.html#locktime-and-sequence-number).
-- `script`: the `Script` instance for this input. Usually called `scriptSig` in the bitcoin community.
+- `sequenceNumber`: a `number`, the sequence number, see [Bitcoin's developer guide on nLockTime and the sequence number](https://developer.bitcoin.org/devguide/transactions.html#locktime-and-sequence-number).
+- `script`: the `Script` instance for this input. Usually called `scriptSig` in the reddcoin community.
 - `output`: if available, a `Output` instance of the output associated with this input.
 
 Both `PublicKeyHashInput` and `MultisigScriptHashInput` cache the information about signatures, even though this information could somehow be encoded in the script. Both need to have the `output` property set in order to calculate the `sighash` so signatures can be created.
@@ -99,7 +99,7 @@ Some methods related to adding inputs are:
   - `from(utxos)`: same as above, but passing in an array of Unspent Outputs.
   - `from(utxo, publicKeys, threshold)`: add an input that spends a UTXO with a P2SH output for a Multisig script. The `publicKeys` argument is an array of public keys, and `threshold` is the number of required signatures in the Multisig script.
 
-- `addInput`: Performs a series of checks on an input and appends it to the end of the `input` vector and updates the amount of incoming bitcoins of the transaction.
+- `addInput`: Performs a series of checks on an input and appends it to the end of the `input` vector and updates the amount of incoming reddcoins of the transaction.
 - `uncheckedAddInput`: adds an input to the end of the `input` vector and updates the `inputAmount` without performing any checks.
 
 ### PublicKeyHashInput
@@ -115,7 +115,7 @@ This input contains a set of signatures in a `signatures` property, and each tim
 The following methods are used to manage signatures for a transaction:
 
 - `getSignatures`: takes an array of `PrivateKey` or strings from which a `PrivateKey` can be instantiated; the transaction to be signed; the kind of [signature hash to use](https://developer.bitcoin.org/devguide/transactions.html#signature-hash-types). Returns an array of objects with the following properties:
-  - `signature`: an instance of [Signature](https://github.com/bitpay/bitcore/blob/master/packages/bitcore-lib/lib/transaction/signature.js)
+  - `signature`: an instance of [Signature](https://github.com/reddcoin-project/reddcore/blob/master/packages/bitcore-lib-redd/lib/transaction/signature.js)
   - `prevTxId`: this input's `prevTxId`,
   - `outputIndex`: this input's `outputIndex`,
   - `inputIndex`: this input's index in the transaction
@@ -142,10 +142,10 @@ There are a series of methods used for serialization:
 
 - `toObject`: Returns a plain JavaScript object with no methods and enough information to fully restore the state of this transaction. Using other serialization methods (except for `toJSON`) will cause a some information to be lost.
 - `toJSON`: Will be called when using `JSON.stringify` to return JSON-encoded string using the output from `toObject`.
-- `toString` or `uncheckedSerialize`: Returns an hexadecimal serialization of the transaction, in the [serialization format for bitcoin](https://developer.bitcoin.org/reference/transactions.html#raw-transaction-format).
+- `toString` or `uncheckedSerialize`: Returns an hexadecimal serialization of the transaction, in the [Bitcoin transaction serialisation format (shared with Reddcoin)](https://developer.bitcoin.org/reference/transactions.html#raw-transaction-format).
 - `serialize`: Does a series of checks before serializing the transaction
 - `inspect`: Returns a string with some information about the transaction (currently a string formatted as `<Transaction 000...000>`, that only shows the serialized value of the transaction.
-- `toBuffer`: Serializes the transaction for sending over the wire in the bitcoin network
+- `toBuffer`: Serializes the transaction for sending over the wire in the reddcoin network
 - `toBufferWriter`: Uses an already existing BufferWriter to copy over the serialized transaction
 
 ## Serialization Checks
@@ -166,7 +166,7 @@ These are the current default values in the bitcore library involved on these ch
 
 ## Fee calculation
 
-When outputs' value don't sum up to the same amount that inputs, the difference in bitcoins goes to the miner of the block that includes this transaction. The concept of a "change address" usually is associated with this: an output with an address that can be spent by the creator of the transaction.
+When outputs' value don't sum up to the same amount that inputs, the difference in reddcoins goes to the miner of the block that includes this transaction. The concept of a "change address" usually is associated with this: an output with an address that can be spent by the creator of the transaction.
 
 For this reason, some methods in the Transaction class are provided:
 
@@ -178,7 +178,7 @@ Internally, a `_changeIndex` property stores the index of the change output (so 
 
 ## Time-Locking transaction
 
-All bitcoin transactions contain a locktime field. The locktime indicates the earliest time a transaction can be added to the blockchain. Locktime allows signers to create time-locked transactions which will only become valid in the future, giving the signers a chance to change their minds. Locktime can be set in the form of a bitcoin block height (the transaction can only be included in a block with a higher height than specified) or a linux timestamp (transaction can only be confirmed after that time). For more information see [bitcoin's development guide section on locktime](https://developer.bitcoin.org/devguide/transactions.html#locktime-and-sequence-number).
+All reddcoin transactions contain a locktime field. The locktime indicates the earliest time a transaction can be added to the blockchain. Locktime allows signers to create time-locked transactions which will only become valid in the future, giving the signers a chance to change their minds. Locktime can be set in the form of a reddcoin block height (the transaction can only be included in a block with a higher height than specified) or a linux timestamp (transaction can only be confirmed after that time). For more information see [Bitcoin's developer guide section on locktime](https://developer.bitcoin.org/devguide/transactions.html#locktime-and-sequence-number).
 
 In bitcore, you can set a `Transaction`'s locktime by using the methods `Transaction#lockUntilDate` and `Transaction#lockUntilBlockHeight`. You can also get a friendly version of the locktime field via `Transaction#getLockTime`;
 

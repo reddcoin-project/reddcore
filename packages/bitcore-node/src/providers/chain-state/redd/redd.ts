@@ -1,7 +1,7 @@
 import { InternalStateProvider } from '../internal/internal';
 
-export class REDDStateProvider extends InternalStateProvider {
-  constructor(chain: string = 'REDD') {
+export class RDDStateProvider extends InternalStateProvider {
+  constructor(chain: string = 'RDD') {
     super(chain);
   }
 }

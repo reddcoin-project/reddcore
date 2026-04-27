@@ -2,10 +2,10 @@
 
 Bitcore Javascript Library and most official submodules work in the browser, thanks to [browserify](http://browserify.org/) (some modules are not fully compatible with web browsers).
 
-The easiest and recommended way to use them, is via [Bower](http://bower.io/), a browser package manager, and get the release bundles. For example, when building an app that uses `bitcore-lib` and `bitcore-mnemonic`, you do:
+The easiest and recommended way to use them, is via [Bower](http://bower.io/), a browser package manager, and get the release bundles. For example, when building an app that uses `bitcore-lib-redd` and `bitcore-mnemonic`, you do:
 
 ```sh
-bower install @bitpay-labs/bitcore-lib
+bower install @reddcoinproject/bitcore-lib-redd
 bower install @bitpay-labs/bitcore-mnemonic
 ```
 
@@ -17,7 +17,7 @@ You can also use a `bower.json` file to store the dependencies of your project:
   "version": "0.0.1",
   "license": "MIT",
   "dependencies": {
-    "@bitpay-labs/bitcore-lib": "^11.5.1",
+    "@reddcoinproject/bitcore-lib-redd": "^11.5.1",
     "@bitpay-labs/bitcore-mnemonic": "^11.5.1"
   }
 }
@@ -33,14 +33,14 @@ After this, you can include the bundled release versions in your HTML file:
 
 <head>
   <meta charset="utf-8">
-  <script src="bower_components/bitcore/bitcore-lib.min.js"></script>
+  <script src="bower_components/bitcore-lib-redd/bitcore-lib-redd.min.js"></script>
   <script src="bower_components/bitcore-mnemonic/bitcore-mnemonic.min.js"></script>
 </head>
 
 <body>
 
   <script type="text/javascript">
-    var bitcore = require('@bitpay-labs/bitcore-lib');
+    var bitcore = require('@reddcoinproject/bitcore-lib-redd');
     var Mnemonic = require('@bitpay-labs/bitcore-mnemonic');
     // etc...
   </script>
@@ -55,11 +55,11 @@ After this, you can include the bundled release versions in your HTML file:
 If you want to use a specific version of a module, instead of a release version (not recommended), you must run browserify yourself.  You can get a minified browser bundle by running the following on the project root folder.
 
 ```sh
-browserify --require ./index.js:bitcore-lib | uglifyjs > bitcore-lib.min.js
+browserify --require ./index.js:bitcore-lib-redd | uglifyjs > bitcore-lib-redd.min.js
 ```
 
 ```sh
-browserify --require ./index.js:bitcore-mnemonic --external bitcore-lib | uglifyjs > bitcore-mnemonic.min.js
+browserify --require ./index.js:bitcore-mnemonic --external bitcore-lib-redd | uglifyjs > bitcore-mnemonic.min.js
 ```
 
 In many of the modules you can also run the command to build a browser bundle:
