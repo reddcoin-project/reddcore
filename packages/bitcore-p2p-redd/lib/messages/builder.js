@@ -19,7 +19,7 @@ function builder(options) {
   options.BlockHeader = options.BlockHeader || bitcore.BlockHeader;
   options.Transaction = options.Transaction || bitcore.Transaction;
   options.MerkleBlock = options.MerkleBlock || bitcore.MerkleBlock;
-  options.protocolVersion = options.protocolVersion || 70001;
+  options.protocolVersion = options.protocolVersion || 80000;
 
   var exported = {
     constructors: {
@@ -49,6 +49,7 @@ function builder(options) {
       notfound: 'NotFound',
       inv: 'Inventory',
       addr: 'Addresses',
+      sendaddrv2: 'SendAddressV2',
       alert: 'Alert',
       reject: 'Reject',
       merkleblock: 'MerkleBlock',

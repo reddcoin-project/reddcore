@@ -24,7 +24,21 @@ module.exports = utils = {
   getNonce: function getNonce() {
     return bitcore.crypto.Random.getRandomBuffer(8);
   },
+  IP4to6: function IP4to6(ip) {
+    var words = ['00','00','00','00','00','00','00','00','00','00','ff','ff'];
+    var ipv6 = [];
+    ip.v4.split('.').forEach(function(s) {
+      words.push(parseInt(s).toString(16));
+    });
+    for (var i = 0; i < words.length; i += 2) {
+      ipv6.push(words[i].concat(words[i + 1]));
+    }
+    return ipv6.join(':');
+  },
   writeIP: function writeIP(ip, bw) {
+    if (!ip.v6 && ip.v4) {
+      ip.v6 = utils.IP4to6(ip);
+    }
     var words = ip.v6.split(':').map(function(s) {
       return Buffer.from(s, 'hex');
     });
