@@ -91,6 +91,10 @@ Block._fromBufferReader = function _fromBufferReader(br) {
   for (var i = 0; i < transactions; i++) {
     info.transactions.push(Transaction().fromBufferReader(br));
   }
+  if(!br.eof()) {
+    info.signature = br.readAll();
+  }
+
   return info;
 };
 
@@ -143,10 +147,15 @@ Block.prototype.toObject = Block.prototype.toJSON = function toObject() {
   this.transactions.forEach(function(tx) {
     transactions.push(tx.toObject());
   });
-  return {
+  let result = {
     header: this.header.toObject(),
-    transactions: transactions
+    transactions: transactions,
   };
+
+  if (this.signature) {
+    result.signature = this.signature.toString('hex');
+  }
+  return result;
 };
 
 /**
@@ -247,6 +256,21 @@ Block.prototype.validMerkleRoot = function validMerkleRoot() {
  */
 Block.prototype._getHash = function() {
   return this.header._getHash();
+};
+
+/**
+ * @returns {boolean} - If the block is Proof of Stake
+ */
+Block.prototype.isProofOfStake = function isProofOfStake() {
+  var size = this.transactions.length;
+  return this.transactions.length > 1 && Transaction().fromObject(this.transactions[1]).isCoinStake();
+};
+
+/**
+ * @returns {boolean} - If the block is Proof of Work
+ */
+Block.prototype.isProofOfWork = function isProofOfWork() {
+  return !this.isProofOfStake();
 };
 
 var idProperty = {
