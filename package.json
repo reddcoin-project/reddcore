@@ -6,6 +6,10 @@
     "type": "git",
     "url": "https://github.com/reddcoin-project/reddcore"
   },
+  "workspaces": [
+    "packages/bitcore-lib-redd",
+    "packages/bitcore-p2p-redd"
+  ],
   "scripts": {
     "build": "docker build -t bitcore-node . ",
     "build:docker": "lerna run build:docker --concurrency 1 --stream",
