@@ -57,6 +57,8 @@
     "ci:bitcore-p2p-cash": "./ci.sh 'npm run test:bitcore-p2p-cash'",
     "test:bitcore-p2p-doge": "cd ./packages/bitcore-p2p-doge && npm run test",
     "ci:bitcore-p2p-doge": "./ci.sh 'npm run test:bitcore-p2p-doge'",
+    "test:bitcore-p2p-redd": "cd ./packages/bitcore-p2p-redd && npm run test",
+    "ci:bitcore-p2p-redd": "./ci.sh 'npm run test:bitcore-p2p-redd'",
     "test:bitcore-mnemonic": "cd ./packages/bitcore-mnemonic && npm run test",
     "ci:bitcore-mnemonic": "./ci.sh 'npm run test:bitcore-mnemonic'",
     "test:bitcore-client": "cd ./packages/bitcore-client && npm run test",
