@@ -1,5 +1,11 @@
 {
+  "name": "reddcore",
   "version": "8.25.8",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/reddcoin-project/reddcore"
+  },
   "scripts": {
     "build": "docker build -t bitcore-node . ",
     "build:docker": "lerna run build:docker --concurrency 1 --stream",
