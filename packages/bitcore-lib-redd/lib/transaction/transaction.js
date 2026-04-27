@@ -87,6 +87,9 @@ Transaction.FEE_PER_KB = 100000;
 Transaction.CHANGE_OUTPUT_MAX_SIZE = 20 + 4 + 34 + 4;
 Transaction.MAXIMUM_EXTRA_SIZE = 4 + 9 + 9 + 4;
 
+// POW transaction version
+Transaction.POW_TX_VERSION = 1;
+
 /* Constructors and Serialization */
 
 /**
@@ -364,6 +367,14 @@ Transaction.prototype.toBufferWriter = function(writer, noWitness) {
   }
 
   writer.writeUInt32LE(this.nLockTime);
+
+  // redd: if no timestamp present, take current time (in seconds)
+  if (this.version > Transaction.POW_TX_VERSION) {
+    var timestamp = this.nTime ? this.nTime : 0;
+    this.nTime = timestamp; // force update of timestamp on object
+    writer.writeUInt32LE(this.nTime);
+  }
+
   return writer;
 };
 
@@ -410,6 +421,11 @@ Transaction.prototype.fromBufferReader = function(reader) {
   }
 
   this.nLockTime = reader.readUInt32LE();
+
+  if ((this.version > Transaction.POW_TX_VERSION) && !reader.eof()) {
+    this.nTime = reader.readUInt32LE();
+  }
+
   return this;
 };
 
@@ -428,8 +444,11 @@ Transaction.prototype.toObject = Transaction.prototype.toJSON = function toObjec
     version: this.version,
     inputs: inputs,
     outputs: outputs,
-    nLockTime: this.nLockTime
+    nLockTime: this.nLockTime,
   };
+  if (this.nTime) {
+    obj.nTime = this.nTime;
+  }
   if (this._changeScript) {
     obj.changeScript = this._changeScript.toString();
   }
@@ -484,6 +503,9 @@ Transaction.prototype.fromObject = function fromObject(arg, opts) {
     this._fee = transaction.fee;
   }
   this.nLockTime = transaction.nLockTime;
+  if (this.version > Transaction.POW_TX_VERSION) {
+      this.nTime = transaction.nTime;
+  }
   this.version = transaction.version;
   this._checkConsistency(arg);
   return this;
@@ -578,6 +600,7 @@ Transaction.prototype.fromString = function(string) {
 Transaction.prototype._newTransaction = function() {
   this.version = CURRENT_VERSION;
   this.nLockTime = DEFAULT_NLOCKTIME;
+  this.nTime = 0;
 };
 
 /* Transaction creation interface */
@@ -1097,6 +1120,9 @@ Transaction.prototype._estimateSize = function() {
   }
 
   result += 4; // nLockTime
+
+  result += 4; // nTime
+
   return Math.ceil(result);
 };
 
