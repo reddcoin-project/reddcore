@@ -52,6 +52,24 @@
           }
         }
       },
+      "REDD": {
+        "mainnet": {
+          "module": "./modules/reddcoin",
+          "chainSource": "p2p",
+          "trustedPeers": [
+            {
+              "host": "localhost",
+              "port": 45444
+            }
+          ],
+          "rpc": {
+            "host": "localhost",
+            "port": 45443,
+            "username": "bitcorenodetest",
+            "password": "local321"
+          }
+        }
+      },
       "ETH": {
         "regtest": {
           "chainSource": "p2p",

@@ -107,6 +107,8 @@
     "@bitpay-labs/bitcore-p2p-cash": "^11.8.1",
     "@bitpay-labs/bitcore-p2p-doge": "^11.8.1",
     "@bitpay-labs/bitcore-wallet-client": "^11.8.1",
+    "@reddcoinproject/bitcore-lib-redd": "^11.8.1",
+    "@reddcoinproject/bitcore-p2p-redd": "^11.8.1",
     "@bitpay-labs/crypto-rpc": "^11.8.1",
     "@bitpay-labs/crypto-wallet-core": "^11.8.1",
     "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
