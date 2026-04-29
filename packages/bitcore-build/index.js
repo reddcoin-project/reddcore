@@ -9,7 +9,40 @@ const terser = require('gulp-terser');
 // const bump = require('gulp-bump');
 // const git = require('gulp-git');
 const fs = require('fs');
+const path = require('path');
 const assert = require('assert');
+
+// Resolve a CLI binary by name. Tries (in order):
+//   1. ./node_modules/@bitpay-labs/bitcore-build/node_modules/.bin/<bin>
+//      — the legacy nested-install layout.
+//   2. ./node_modules/.bin/<bin>
+//      — flat install at the package's own level.
+//   3. Walk up parent directories looking for node_modules/.bin/<bin>
+//      — handles npm-workspaces hoisting (binaries land at the workspace
+//      root, several levels up from the package being built).
+// Returns the relative-to-CWD path so the existing shell-task strings stay
+// the same shape.
+function resolveBin(binName) {
+  const candidates = [
+    './node_modules/@bitpay-labs/bitcore-build/node_modules/.bin/' + binName,
+    './node_modules/.bin/' + binName,
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  let dir = path.resolve('.');
+  while (dir !== path.dirname(dir)) {
+    const cand = path.join(dir, 'node_modules', '.bin', binName);
+    if (fs.existsSync(cand)) {
+      const rel = path.relative('.', cand);
+      return rel.startsWith('.') ? rel : './' + rel;
+    }
+    dir = path.dirname(dir);
+  }
+  // Surrender — return the conventional path so the eventual shell error is
+  // recognisable.
+  return './node_modules/.bin/' + binName;
+}
 
 function ignoreerror() {
   /* jshint ignore:start */ // using `this` in this context is weird
@@ -33,39 +66,16 @@ function startGulp(name, opts) {
 
   const buildPath = './node_modules/@bitpay-labs/bitcore-build/';
   const buildModulesPath = buildPath + 'node_modules/';
-  const buildBinPath = buildPath + 'node_modules/.bin/';
 
-  let browserifyPath = buildBinPath + 'browserify';
-  let karmaPath = buildBinPath + 'karma';
-  let webdriverioPath = buildBinPath + 'wdio';
-  let platoPath = buildBinPath + 'plato';
-  let istanbulPath = buildBinPath + 'istanbul';
-  let mochaPath = buildBinPath + '_mocha';
-
-  // newer version of node? binaries are in lower level of node_module path
-  if (!fs.existsSync(browserifyPath)) {
-    browserifyPath = './node_modules/.bin/browserify';
-  }
-
-  if (!fs.existsSync(karmaPath)) {
-    karmaPath = './node_modules/.bin/karma';
-  }
-
-  if (!fs.existsSync(webdriverioPath)) {
-    webdriverioPath = './node_modules/.bin/wdio';
-  }
-
-  if (!fs.existsSync(istanbulPath)) {
-    istanbulPath = './node_modules/.bin/istanbul';
-  }
-
-  if (!fs.existsSync(platoPath)) {
-    platoPath = './node_modules/.bin/plato';
-  }
-
-  if (!fs.existsSync(mochaPath)) {
-    mochaPath = './node_modules/.bin/_mocha';
-  }
+  // Each binary is resolved independently — under npm workspaces, hoisting
+  // can land them at the monorepo root rather than the package's own
+  // node_modules.
+  const browserifyPath = resolveBin('browserify');
+  const karmaPath = resolveBin('karma');
+  const webdriverioPath = resolveBin('wdio');
+  const platoPath = resolveBin('plato');
+  const istanbulPath = resolveBin('istanbul');
+  const mochaPath = resolveBin('_mocha');
 
   /**
    * testing
