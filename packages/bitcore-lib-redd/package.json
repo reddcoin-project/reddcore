@@ -4,6 +4,17 @@
   "description": "A pure and powerful JavaScript Reddcoin library.",
   "author": "Reddcoin Project <dev@reddcoin.com>",
   "main": "index.js",
+  "files": [
+    "index.js",
+    "gulpfile.js",
+    "karma.conf.js",
+    "bitcore-lib-redd.js",
+    "bitcore-lib-redd.min.js",
+    "lib/",
+    "docs/",
+    "test/",
+    "benchmark/"
+  ],
   "scripts": {
     "test": "gulp test",
     "test:ci": "npm run test",

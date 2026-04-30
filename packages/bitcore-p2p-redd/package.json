@@ -4,6 +4,15 @@
   "description": "Interface to the reddcoin P2P network for bitcore",
   "author": "Reddcoin Project <dev@reddcoin.com>",
   "main": "index.js",
+  "files": [
+    "index.js",
+    "gulpfile.js",
+    "karma.conf.js",
+    "lib/",
+    "docs/",
+    "test/",
+    "integration/"
+  ],
   "scripts": {
     "test": "gulp test",
     "test:ci": "npm run test",
