@@ -69,6 +69,10 @@ class ModuleManager extends BaseModule {
       const networks = params.network ? [params.network] : Config.networksFor(chain);
       for (const network of networks) {
         const config = Config.chainConfig({ chain, network });
+        if (config.disabled) {
+          logger.debug(`Skipping disabled chain ${chain}:${network}`);
+          continue;
+        }
         modulePath = config.module || modulePath; // custom module path
         if (!modulePath) {
           logger.warn(`Module not found for ${chain}:${network}. Did you forget to specify 'module' in the config?`);

@@ -6,7 +6,7 @@ export interface IChainConfig<T extends INetworkConfig> {
 }
 
 interface INetworkConfig {
-  disabled?: boolean; // Disables P2P worker for this network
+  disabled?: boolean; // Skip the entire module (no module load, no P2P worker, no API for this chain:network)
   module?: string; // Specific/custom module
   chainSource?: 'p2p' | 'external';
   trustedPeers: {
