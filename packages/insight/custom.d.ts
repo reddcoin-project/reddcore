@@ -27,3 +27,8 @@ declare module '@bitpay-labs/bitcore-lib-ltc' {
     const index: any;
     export default index;
 }
+
+declare module '@reddcoinproject/bitcore-lib-redd' {
+    const index: any;
+    export default index;
+}
