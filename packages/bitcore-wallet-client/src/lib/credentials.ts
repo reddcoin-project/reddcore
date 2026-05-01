@@ -263,6 +263,8 @@ export class Credentials {
         chainPath = '3';
       } else if (chain == 'ltc') {
         chainPath = '2';
+      } else if (chain == 'rdd') {
+        chainPath = '4'; // SLIP-0044 coin type for Reddcoin
       } else if (chain == 'sol') {
         chainPath = '501';
       } else {
@@ -385,7 +387,7 @@ export class Credentials {
   isComplete() {
     if (!this.m || !this.n) return false;
     if (
-      ['btc', 'bch', 'doge', 'ltc'].includes(this.chain) &&
+      ['btc', 'bch', 'doge', 'ltc', 'rdd'].includes(this.chain) &&
       !this.tssKeyId && // TSS creds will have publicKeyRing.length > n
       (!this.publicKeyRing || this.publicKeyRing.length != this.n)
     )

@@ -33,6 +33,7 @@ const Bitcore_ = {
   xrp: CWC.BitcoreLib,
   doge: CWC.BitcoreLibDoge,
   ltc: CWC.BitcoreLibLtc,
+  rdd: CWC.BitcoreLibRedd,
   sol: CWC.BitcoreLib,
 };
 

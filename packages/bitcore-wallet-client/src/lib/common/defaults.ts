@@ -10,6 +10,11 @@ export const Defaults = {
         return 0.5e8;
       case 'doge':
         return 400e8;
+      case 'rdd':
+        // Reddcoin denomination is similar to DOGE (high nominal supply,
+        // low per-unit USD value). Cap matches the DOGE order-of-magnitude
+        // so a runaway fee can't accidentally drain a stake-rich wallet.
+        return 400e8;
       default:
         return 1e8;
     }

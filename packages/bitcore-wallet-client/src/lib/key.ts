@@ -584,6 +584,8 @@ export class Key {
       coinCode = '3';
     } else if (chain == 'ltc') {
       coinCode = '2';
+    } else if (chain == 'rdd') {
+      coinCode = '4'; // SLIP-0044 coin type for Reddcoin
     } else if (chain == 'sol') {
       coinCode = '501';
       addChange = true; // Solana does not use change addresses. Standard is keeping this at 0

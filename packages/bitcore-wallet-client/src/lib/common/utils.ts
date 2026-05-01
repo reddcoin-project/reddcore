@@ -5,6 +5,7 @@ import {
   BitcoreLibCash,
   BitcoreLibDoge,
   BitcoreLibLtc,
+  BitcoreLibRedd,
   Deriver,
   Transactions
 } from '@bitpay-labs/crypto-wallet-core';
@@ -27,6 +28,7 @@ const Bitcore_ = {
   xrp: BitcoreLib,
   doge: BitcoreLibDoge,
   ltc: BitcoreLibLtc,
+  rdd: BitcoreLibRedd,
   sol: BitcoreLib
 };
 const PrivateKey = BitcoreLib.PrivateKey;
