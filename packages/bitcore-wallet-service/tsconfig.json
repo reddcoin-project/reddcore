@@ -18,10 +18,8 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "resolveJsonModule": true,
+    "skipLibCheck": true,
     "target": "ES2023",
-    "typeRoots": [
-      "./node_modules/@types"
-    ],
     "baseUrl": ".",
     "paths": {
       "*": [

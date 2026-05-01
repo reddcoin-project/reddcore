@@ -13,6 +13,7 @@ export const Constants = {
     XRP: 'xrp',
     DOGE: 'doge',
     LTC: 'ltc',
+    RDD: 'rdd',
     SOL: 'sol'
   },
 
@@ -25,6 +26,7 @@ export const Constants = {
     XRP: 'xrp',
     DOGE: 'doge',
     LTC: 'ltc',
+    RDD: 'rdd',
     SHIB: 'shib',
     APE: 'ape',
     USDC: 'usdc',
@@ -79,7 +81,8 @@ export const Constants = {
     BTC: 'btc',
     BCH: 'bch',
     DOGE: 'doge',
-    LTC: 'ltc'
+    LTC: 'ltc',
+    RDD: 'rdd'
   },
 
   EVM_CHAINS: {
@@ -108,6 +111,7 @@ export const Constants = {
     matic: ['livenet', 'amoy', 'regtest'],
     ltc: ['livenet', 'testnet4', 'regtest'],
     doge: ['livenet', 'testnet3', 'regtest'],
+    rdd: ['livenet', 'testnet', 'regtest'],
     xrp: ['livenet', 'testnet', 'regtest'],
     arb: ['livenet', 'sepolia', 'holesky', 'regtest'],
     base: ['livenet', 'sepolia', 'holesky', 'regtest'],
@@ -132,6 +136,10 @@ export const Constants = {
     doge: {
       mainnet: 'livenet',
       testnet: 'testnet3'
+    },
+    rdd: {
+      mainnet: 'livenet',
+      testnet: 'testnet'
     },
     xrp: {
       mainnet: 'livenet',
@@ -174,11 +182,13 @@ export const Constants = {
 
   NATIVE_SEGWIT_CHAINS: {
     BTC: 'btc',
-    LTC: 'ltc'
+    LTC: 'ltc',
+    RDD: 'rdd'
   },
 
   TAPROOT_CHAINS: {
-    BTC: 'btc'
+    BTC: 'btc',
+    RDD: 'rdd'
   },
 
   DERIVATION_STRATEGIES: {

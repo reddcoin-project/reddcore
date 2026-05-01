@@ -12,6 +12,7 @@ import { EthChain } from './eth';
 import { LtcChain } from './ltc';
 import { MaticChain } from './matic';
 import { OpChain } from './op';
+import { ReddChain } from './redd';
 import { SolChain } from './sol';
 import { XrpChain } from './xrp';
 
@@ -29,6 +30,7 @@ const chains: { [chain: string]: IChain } = {
   XRP: new XrpChain(),
   DOGE: new DogeChain(),
   LTC: new LtcChain(),
+  RDD: new ReddChain(),
   SOL: new SolChain()
 };
 
