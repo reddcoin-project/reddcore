@@ -1,6 +1,7 @@
 export const SUPPORTED_CURRENCIES = ['BTC', 'BCH', 'ETH', 'DOGE', 'LTC', 'RDD'];
-export const API_ROOT = 'https://api.bitcore.io/api';
-export const API_ROOT_ETH = 'https://api-eth.bitcore.io/api';
+export const API_ROOT = process.env.REACT_APP_API_ROOT || 'https://api.bitcore.io/api';
+export const API_ROOT_ETH = process.env.REACT_APP_API_ROOT_ETH || 'https://api-eth.bitcore.io/api';
+export const API_ROOT_RDD = process.env.REACT_APP_API_ROOT_RDD || 'http://localhost:3000/api';
 export const ETH_DEFAULT_REFRESH_INTERVAL = 300000;
 export const UTXO_DEFAULT_REFRESH_INTERVAL = 600000;
 export const COIN = 100000000;

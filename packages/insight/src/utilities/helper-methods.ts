@@ -7,6 +7,7 @@ import RDDIcon from '../assets/images/currencies/RDD.svg';
 import {
   API_ROOT,
   API_ROOT_ETH,
+  API_ROOT_RDD,
   COIN,
   DEFAULT_RBF_SEQ_NUMBER,
   ETH_DEFAULT_REFRESH_INTERVAL,
@@ -37,8 +38,11 @@ export const buildTime = (time: string): string => {
   return minutes + ' minutes';
 };
 
-export const getApiRoot = (currency: string): string =>
-  ['ETH'].includes(currency) ? API_ROOT_ETH : API_ROOT;
+export const getApiRoot = (currency: string): string => {
+  if (currency === 'ETH') return API_ROOT_ETH;
+  if (currency === 'RDD') return API_ROOT_RDD;
+  return API_ROOT;
+};
 export const getDefaultRefreshInterval = (currency: string): number =>
   ['ETH'].includes(currency) ? ETH_DEFAULT_REFRESH_INTERVAL : UTXO_DEFAULT_REFRESH_INTERVAL;
 export const urlSafetyCheck = (url: string) => (url.includes('undefined') ? null : url);
