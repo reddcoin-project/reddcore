@@ -2,7 +2,7 @@ import {MainTitle} from '../assets/styles/titles';
 import {Grid} from '../assets/styles/grid';
 import styled from 'styled-components';
 import {Tile, TileDescription} from '../assets/styles/tile';
-import {getFormattedDate} from '../utilities/helper-methods';
+import {getCurrencyIcon, getFormattedDate} from '../utilities/helper-methods';
 import {motion} from 'framer-motion';
 import {routerFadeIn} from '../utilities/animations';
 import {useNavigate} from 'react-router-dom';
@@ -91,7 +91,7 @@ const Search: React.FC = () => {
                         <SearchTileHeader>
                           <HeaderImg>
                             <img
-                              src={`https://bitpay.com/img/icon/currencies/${chain}.svg`}
+                              src={getCurrencyIcon(chain)}
                               width={35}
                               height={35}
                               alt='currency logo'
@@ -131,7 +131,7 @@ const Search: React.FC = () => {
                         <SearchTileHeader>
                           <HeaderImg>
                             <img
-                              src={`https://bitpay.com/img/icon/currencies/${chain}.svg`}
+                              src={getCurrencyIcon(chain)}
                               width={35}
                               height={35}
                               alt='currency logo'
@@ -169,7 +169,7 @@ const Search: React.FC = () => {
                       <SearchTileHeader>
                         <HeaderImg>
                           <img
-                            src={`https://bitpay.com/img/icon/currencies/${chain}.svg`}
+                            src={getCurrencyIcon(chain)}
                             width={35}
                             height={35}
                             alt='currency logo'

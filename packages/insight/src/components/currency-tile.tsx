@@ -15,7 +15,7 @@ import {Error, SlateDark, White} from '../assets/styles/colors';
 import {Spinner} from '../assets/styles/spinner';
 import {Tile} from '../assets/styles/tile';
 import {colorCodes} from '../utilities/constants';
-import {buildTime, getApiRoot, getDefaultRefreshInterval} from '../utilities/helper-methods';
+import {buildTime, getApiRoot, getCurrencyIcon, getDefaultRefreshInterval} from '../utilities/helper-methods';
 
 // Register necessary Chart.js components
 ChartJS.register(CategoryScale, LinearScale, LineController, LineElement, PointElement);
@@ -28,6 +28,7 @@ const LightBackground: {[key in string]: string} = {
   ETH: '#EBECF6',
   LTC: '#FAFAFA',
   DOGE: '#FDF8E6',
+  RDD: '#FFEAEA',
 };
 
 const DarkBackground: {[key in string]: string} = {
@@ -36,6 +37,7 @@ const DarkBackground: {[key in string]: string} = {
   ETH: '#06070F',
   LTC: '#0A0A0A',
   DOGE: '#0B0903',
+  RDD: '#0F0202',
 };
 
 interface CurrencyTileDivProps {
@@ -205,7 +207,7 @@ const CurrencyTile: FC<CurrencyTileProps> = ({currency}) => {
   }
 
   const {height, time, transactionCount, size} = data[0];
-  const imgSrc = `https://bitpay.com/img/icon/currencies/${currency}.svg`;
+  const imgSrc = getCurrencyIcon(currency);
 
   const gotoChain = () => {
     navigate(`/${currency}/mainnet/blocks`);

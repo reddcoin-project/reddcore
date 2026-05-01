@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import CloseLightSvg from 'src/assets/images/close.svg'
 import {Black, White, Slate30} from '../assets/styles/colors';
 import {size} from 'src/utilities/constants';
+import {getCurrencyIcon} from 'src/utilities/helper-methods';
 
 const PillBubble = styled.div`
   display: flex;
@@ -83,7 +84,7 @@ export const Pill: FC<PillProps> = ({ currency, network, onCloseClick }) => {
   return (
     currency ?
       <PillBubble>
-        <CurrencyImg src={`https://bitpay.com/img/icon/currencies/${currency}.svg`} alt={currency} />
+        <CurrencyImg src={getCurrencyIcon(currency)} alt={currency} />
         <NetworkLabel>{network}</NetworkLabel>
         <PillCloseButtonScope onClick={onCloseClick}>
           <PillCloseButtonCircle>

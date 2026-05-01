@@ -1,4 +1,4 @@
-export const SUPPORTED_CURRENCIES = ['BTC', 'BCH', 'ETH', 'DOGE', 'LTC'];
+export const SUPPORTED_CURRENCIES = ['BTC', 'BCH', 'ETH', 'DOGE', 'LTC', 'RDD'];
 export const API_ROOT = 'https://api.bitcore.io/api';
 export const API_ROOT_ETH = 'https://api-eth.bitcore.io/api';
 export const ETH_DEFAULT_REFRESH_INTERVAL = 300000;
@@ -12,6 +12,7 @@ export const colorCodes: any = {
   ETH: '#6B71D6',
   LTC: '#868686',
   DOGE: '#B29832',
+  RDD: '#CC0000',
 };
 
 // Media breakpoints

@@ -4,7 +4,7 @@ import {Chart as ChartJS} from 'chart.js';
 import {colorCodes, size} from 'src/utilities/constants';
 import {BitcoinBlockType} from 'src/utilities/models';
 import styled from 'styled-components';
-import {getName} from 'src/utilities/helper-methods';
+import {getCurrencyIcon, getName} from 'src/utilities/helper-methods';
 import Dropdown from './dropdown';
 import {useBlocks} from 'src/contexts';
 import {FeeMetadataSpan, PriceMetadataSpan} from './graph-metadata-spans';
@@ -221,7 +221,7 @@ const ChainHeader: FC<{ currency: string; network: string }> = ({ currency, netw
     <div>
       <span style={{fontSize: '50px', fontWeight: 'bold'}}>Blocks </span>
         <img
-          src={`https://bitpay.com/img/icon/currencies/${currency}.svg`}
+          src={getCurrencyIcon(currency)}
           alt={currency}
           style={{height: '25px', marginBottom: '0.25rem'}}
         />

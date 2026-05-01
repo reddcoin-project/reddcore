@@ -38,6 +38,20 @@ const inputTypes: InputType[] = [
     type: 'address',
     chainNetworks: [{chain: 'LTC', network: 'mainnet'}],
   },
+  //  RDD Address (legacy P2PKH, prefix byte 0x3d → leading 'R')
+  {
+    regexes: [/^(reddcoin:)?(R[1-9A-HJ-NP-Za-km-z]{25,34}$)/],
+    dataIndex: 2,
+    type: 'address',
+    chainNetworks: [{chain: 'RDD', network: 'mainnet'}],
+  },
+  //  RDD bech32 Address (HRP 'rdd')
+  {
+    regexes: [/^(reddcoin:)?(rdd1[ac-hj-np-z02-9]{6,87})$/],
+    dataIndex: 2,
+    type: 'address',
+    chainNetworks: [{chain: 'RDD', network: 'mainnet'}],
+  },
 
   // Testnet BTC / BCH / Doge / LTC Address
   {
@@ -74,7 +88,7 @@ const inputTypes: InputType[] = [
     type: 'address',
     chainNetworks: [{chain: 'DOGE', network: 'mainnet'}],
   },
-  // BTC / BCH / DOGE / LTC block or tx
+  // BTC / BCH / DOGE / LTC / RDD block or tx
   {
     regexes: [/^[A-Fa-f0-9]{64}$/],
     type: 'blockOrTx',
@@ -83,6 +97,7 @@ const inputTypes: InputType[] = [
       {chain: 'BCH', network: 'mainnet'},
       {chain: 'DOGE', network: 'mainnet'},
       {chain: 'LTC', network: 'mainnet'},
+      {chain: 'RDD', network: 'mainnet'},
       {chain: 'BTC', network: 'testnet'},
       {chain: 'BCH', network: 'testnet'},
       {chain: 'DOGE', network: 'testnet'},
@@ -98,7 +113,7 @@ const inputTypes: InputType[] = [
       {chain: 'ETH', network: 'testnet'},
     ],
   },
-  // BTC / BCH / DOGE / ETH block height
+  // BTC / BCH / DOGE / ETH / LTC / RDD block height
   {
     regexes: [/^[0-9]{1,9}$/],
     type: 'block',
@@ -108,6 +123,7 @@ const inputTypes: InputType[] = [
       {chain: 'DOGE', network: 'mainnet'},
       {chain: 'ETH', network: 'mainnet'},
       {chain: 'LTC', network: 'mainnet'},
+      {chain: 'RDD', network: 'mainnet'},
       {chain: 'BTC', network: 'testnet'},
       {chain: 'BCH', network: 'testnet'},
       {chain: 'DOGE', network: 'testnet'},

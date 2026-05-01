@@ -2,6 +2,8 @@ import BitcoreLib from '@bitpay-labs/bitcore-lib';
 import BitcoreLibCash from '@bitpay-labs/bitcore-lib-cash';
 import BitcoreLibDoge from '@bitpay-labs/bitcore-lib-doge';
 import BitcoreLibLtc from '@bitpay-labs/bitcore-lib-ltc';
+import BitcoreLibRedd from '@reddcoinproject/bitcore-lib-redd';
+import RDDIcon from '../assets/images/currencies/RDD.svg';
 import {
   API_ROOT,
   API_ROOT_ETH,
@@ -11,6 +13,14 @@ import {
   UTXO_DEFAULT_REFRESH_INTERVAL,
 } from './constants';
 import {BlockTransactionDetails} from './models';
+
+const LOCAL_CURRENCY_ICONS: {[key: string]: string} = {
+  RDD: RDDIcon,
+};
+
+export const getCurrencyIcon = (currency: string): string =>
+  LOCAL_CURRENCY_ICONS[currency.toUpperCase()] ||
+  `https://bitpay.com/img/icon/currencies/${currency}.svg`;
 
 export const buildTime = (time: string): string => {
   const diffMs = Math.abs(Date.now() - Date.parse(time));
@@ -179,6 +189,8 @@ export const getLib = (currency: string) => {
       return BitcoreLibDoge;
     case 'LTC':
       return BitcoreLibLtc;
+    case 'RDD':
+      return BitcoreLibRedd;
     default:
       return BitcoreLib;
   }
@@ -196,6 +208,8 @@ export const getName = (currency: string) => {
       return 'Litecoin';
     case 'ETH':
       return 'Ethereum';
+    case 'RDD':
+      return 'Reddcoin';
     default:
       return 'Bitcoin';
   }
