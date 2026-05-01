@@ -10,6 +10,10 @@ export interface ApiTransaction {
   value: number;
   confirmations: number;
   coinbase: boolean;
+  /** Reddcoin PoSV — true on the second tx of a PoS block. Absent otherwise. */
+  coinstake?: boolean;
+  /** For coinstake txs: subsidy + fees collected. Absent otherwise. */
+  stakeReward?: number;
 }
 
 export interface Transaction extends ApiTransaction {
@@ -79,9 +83,14 @@ export interface BlockTransactionDetails {
   inputs: any[];
   outputs: any[];
   isCoinBase: boolean;
+  /** Reddcoin PoSV — true on the second tx of a PoS block. */
+  isCoinstake?: boolean;
+  /** For coinstake txs: subsidy + collected_fees as a positive integer. */
+  stakeReward?: number;
   time: number;
   txid: string;
   valueOut: number;
+  fee?: number;
 }
 
 export interface InputType {
@@ -118,6 +127,11 @@ export type BitcoinBlockType = BlocksType & {
   version: number,
   confirmations: number,
   feeData: FeeData;
+  /**
+   * Reddcoin PoSV-only. Absent on chains without a stake mechanism
+   * and on pre-PoSV Reddcoin PoW blocks (height < 260800).
+   */
+  posData?: PosData;
 };
 
 export type FeeData = {
@@ -125,4 +139,10 @@ export type FeeData = {
   mean: number;
   median: number;
   mode: number;
+}
+
+export type PosData = {
+  isProofOfStake: boolean;
+  subsidy: number;
+  totalFeesCollected: number;
 }

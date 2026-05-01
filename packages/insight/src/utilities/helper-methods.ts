@@ -119,12 +119,20 @@ export const aggregateItems = (items: any[]): any[] => {
 };
 
 export const getFee = (tx: BlockTransactionDetails): number => {
+  // Coinbase doesn't pay a fee; coinstake (Reddcoin PoSV) collects
+  // them, so neither row should advertise inputs-outputs as a "fee" —
+  // for the coinstake that number is `-(subsidy + collected_fees)`,
+  // a meaningless negative on the explorer.
+  if (tx.isCoinBase || tx.isCoinstake) return 0;
   const sumSatoshis: any = (arr: any): number =>
     arr.reduce((prev: any, cur: any) => prev + cur.value, 0);
   const inputs: number = sumSatoshis(tx.inputs);
   const outputs: number = sumSatoshis(tx.outputs);
-  return tx.isCoinBase ? 0 : inputs - outputs;
+  return inputs - outputs;
 };
+
+export const isPoSBlock = (block: { posData?: { isProofOfStake: boolean } }): boolean =>
+  block.posData?.isProofOfStake === true;
 
 export const getAddress = (v: any): string => {
   if (v.address === 'false') {
