@@ -7,15 +7,14 @@
     "url": "https://github.com/reddcoin-project/reddcore"
   },
   "workspaces": [
-    "packages/bitcore-build",
-    "packages/bitcore-lib-redd",
-    "packages/bitcore-p2p-redd"
+    "packages/*",
+    "!packages/insight"
   ],
   "scripts": {
     "build": "docker build -t bitcore-node . ",
     "build:docker": "lerna run build:docker --concurrency 1 --stream",
     "watch": "./node_modules/.bin/lerna run watch --parallel",
-    "postinstall": "npm run bootstrap && npm run compile",
+    "postinstall": "npm run compile",
     "bootstrap": "./node_modules/.bin/lerna bootstrap",
     "insight:build": "cd ./packages/insight && npm i && npm run build",
     "node": "cd packages/bitcore-node && npm start",
