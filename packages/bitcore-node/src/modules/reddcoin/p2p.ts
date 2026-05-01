@@ -10,7 +10,7 @@ export class ReddcoinP2PWorker extends LitecoinP2PWorker {
     }
 
     this.messages = new this.bitcoreP2p.Messages({
-      protocolVersion: 80000,
+      protocolVersion: 80016,
       network: this.bitcoreLib.Networks.get(this.network),
       Block: this.bitcoreLib.Block,
       Transaction: this.bitcoreLib.Transaction,

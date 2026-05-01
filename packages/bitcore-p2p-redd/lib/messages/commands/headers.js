@@ -10,6 +10,11 @@ const BufferWriter = bitcore.encoding.BufferWriter;
 const _ = bitcore.deps._;
 const $ = bitcore.util.preconditions;
 
+// Reddcoin: PoSV blocks (nVersion > POW_BLOCK_VERSION) carry an extra
+// vchBlockSig field after the txn_count in the headers message.
+// See packages/bitcore-lib-redd primitives/block.h SERIALIZE_METHODS(CBlock).
+const POW_BLOCK_VERSION = 2;
+
 /**
  * Sent in response to a `getheaders` message. It contains information about
  * block headers.
@@ -41,8 +46,14 @@ HeadersMessage.prototype.setPayload = function(payload) {
   for (var i = 0; i < count; i++) {
     var header = this.BlockHeader.fromBufferReader(parser);
     this.headers.push(header);
-    var txn_count = parser.readUInt8();
+    var txn_count = parser.readVarintNum();
     $.checkState(txn_count === 0, 'txn_count should always be 0');
+    if (header.version > POW_BLOCK_VERSION) {
+      var sigLen = parser.readVarintNum();
+      if (sigLen > 0) {
+        parser.read(sigLen);
+      }
+    }
   }
   utils.checkFinished(parser);
 };
@@ -51,9 +62,12 @@ HeadersMessage.prototype.getPayload = function() {
   var bw = new BufferWriter();
   bw.writeVarintNum(this.headers.length);
   for (var i = 0; i < this.headers.length; i++) {
-    var buffer = this.headers[i].toBuffer();
-    bw.write(buffer);
-    bw.writeUInt8(0);
+    var header = this.headers[i];
+    bw.write(header.toBuffer());
+    bw.writeVarintNum(0); // txn_count
+    if (header.version > POW_BLOCK_VERSION) {
+      bw.writeVarintNum(0); // empty vchBlockSig
+    }
   }
   return bw.concat();
 };
