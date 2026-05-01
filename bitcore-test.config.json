@@ -54,7 +54,7 @@
       },
       "RDD": {
         "mainnet": {
-          "module": "./modules/reddcoin",
+          "module": "./reddcoin",
           "chainSource": "p2p",
           "trustedPeers": [
             {
