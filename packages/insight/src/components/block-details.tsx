@@ -3,6 +3,7 @@ import nProgress from 'nprogress';
 import {FC, memo, useEffect, useState} from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import {useNavigate} from 'react-router-dom';
+import styled from 'styled-components';
 import {fetcher} from '../api/api';
 import {DisplayFlex} from '../assets/styles/global';
 import {Grid} from '../assets/styles/grid';
@@ -15,6 +16,7 @@ import {
   getDifficultyFromBits,
   getFee,
   getFormattedDate,
+  isPoSBlock,
   normalizeParams,
 } from '../utilities/helper-methods';
 import CopyText from './copy-text';
@@ -30,19 +32,47 @@ interface BlockDetailsProps {
   block: string;
 }
 
-const populateTxsForBlock = (txData: any, {time, height}: {time: number; height: number}) => {
-  const txd = txData.txids.map((txid: any) => {
+const ConsensusBadge = styled.span<{$pos: boolean}>`
+  display: inline-block;
+  margin-left: 0.75rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+  color: #fff;
+  background: ${({$pos}) => ($pos ? '#7B4FD9' : '#F7931A')};
+`;
+
+const populateTxsForBlock = (
+  txData: any,
+  {time, height, isPoS}: {time: number; height: number; isPoS: boolean},
+) => {
+  // PoSV invariant: every PoS block has tx[0] = coinbase placeholder
+  // and tx[1] = coinstake. The /block/<hash>/coins endpoint returns
+  // txids in block order, so the second entry is the coinstake.
+  const txd = txData.txids.map((txid: any, index: number) => {
     const tx: any = {};
     tx.txid = txid;
     tx.inputs = txData.inputs.filter((input: any) => input.spentTxid === txid);
     tx.outputs = txData.outputs.filter((output: any) => output.mintTxid === txid);
-    tx.fee = getFee(tx);
+    tx.coinbase = tx.inputs.length === 0;
+    tx.isCoinBase = tx.coinbase;
+    tx.isCoinstake = isPoS && index === 1 && tx.inputs.length > 0;
+    if (tx.isCoinstake) {
+      const inputsTotal = tx.inputs.reduce((a: any, b: any) => a + b.value, 0);
+      const outputsTotal = tx.outputs.reduce((a: any, b: any) => a + b.value, 0);
+      tx.stakeReward = outputsTotal - inputsTotal;
+      tx.fee = 0;
+    } else {
+      tx.fee = getFee(tx);
+    }
     tx.blockHeight = tx.outputs[0].mintHeight;
     tx.blockTime = time;
     tx.value = tx.outputs
       .filter((output: any) => output.mintTxid === txid)
       .reduce((a: any, b: any) => a + b.value, 0);
-    tx.inputs.length === 0 ? (tx.coinbase = true) : (tx.coinbase = false);
     tx.confirmations = tx.blockHeight > 0 ? height - tx.blockHeight + 1 : tx.blockHeight;
     return tx;
   });
@@ -80,7 +110,13 @@ const BlockDetails: FC<BlockDetailsProps> = ({currency, network, block}) => {
         if (_transactionList) {
           _transactionList = [_transactionList];
           const formattedData = _transactionList
-            .map((data: any) => populateTxsForBlock(data, _tip))
+            .map((data: any) =>
+              populateTxsForBlock(data, {
+                time: _tip.time,
+                height: _tip.height,
+                isPoS: isPoSBlock(_summary),
+              }),
+            )
             .flat();
 
           setTransactionList(formattedData);
@@ -105,7 +141,13 @@ const BlockDetails: FC<BlockDetailsProps> = ({currency, network, block}) => {
           _transactionList = [_transactionList];
 
           const formattedData = _transactionList
-            .map((data: any) => populateTxsForBlock(data, tip))
+            .map((data: any) =>
+              populateTxsForBlock(data, {
+                time: tip.time,
+                height: tip.height,
+                isPoS: isPoSBlock(summary),
+              }),
+            )
             .flat();
 
           setTransactionList(transactionList.concat(formattedData));
@@ -129,6 +171,11 @@ const BlockDetails: FC<BlockDetailsProps> = ({currency, network, block}) => {
               <MainTitle style={{marginBottom: 8}}>
                 Block #{summary.height}
                 <SupCurrencyLogo currency={currency} />
+                {summary.posData && (
+                  <ConsensusBadge $pos={summary.posData.isProofOfStake}>
+                    {summary.posData.isProofOfStake ? 'PoS' : 'PoW'}
+                  </ConsensusBadge>
+                )}
               </MainTitle>
 
               <DisplayFlex>
@@ -186,6 +233,18 @@ const BlockDetails: FC<BlockDetailsProps> = ({currency, network, block}) => {
                   title='Block Reward'
                   description={`${getConvertedValue(summary.reward, currency).toFixed(3)} ${currency}`}
                 />
+                {summary.posData && summary.posData.isProofOfStake && (
+                  <>
+                    <SharedTile
+                      title='Stake Subsidy'
+                      description={`${getConvertedValue(summary.posData.subsidy, currency).toFixed(3)} ${currency}`}
+                    />
+                    <SharedTile
+                      title='Fees Collected'
+                      description={`${getConvertedValue(summary.posData.totalFeesCollected, currency).toFixed(5)} ${currency}`}
+                    />
+                  </>
+                )}
                 <SharedTile title='Confirmations' description={summary.confirmations} />
 
                 <SharedTile title='Timestamp' description={getFormattedDate(summary.time) || ''} />

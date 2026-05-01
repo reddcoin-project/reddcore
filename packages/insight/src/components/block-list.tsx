@@ -33,6 +33,19 @@ const BlockListTableRow = styled.tr`
   font-size: 16px;
 `;
 
+const ConsensusTag = styled.span<{$pos: boolean}>`
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.7em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+  color: #fff;
+  background: ${({$pos}) => ($pos ? '#7B4FD9' : '#F7931A')};
+`;
+
 
 const getBlocksUrl = (currency: string, network: string) => {
   return `${getApiRoot(currency)}/${currency}/${network}/block?limit=200`;
@@ -150,6 +163,16 @@ const BlockList: FC<{currency: string, network: string}> = ({currency, network})
                 }
                 const columnLeftExpandedData : Array<{label: string, value: any}> = columnLeftExpandedDataKeys.map(key => dataRowsDB[key]);
                 const columnRightExpandedData : Array<{label: string, value: any}> = columnRightExpandedDataKeys.map(key => dataRowsDB[key]);
+                if (block.posData?.isProofOfStake) {
+                  columnLeftExpandedData.push({
+                    label: 'Stake subsidy',
+                    value: `${getConvertedValue(block.posData.subsidy, currency).toFixed(3)} ${currency}`,
+                  });
+                  columnLeftExpandedData.push({
+                    label: 'Fees collected',
+                    value: `${getConvertedValue(block.posData.totalFeesCollected, currency).toFixed(5)} ${currency}`,
+                  });
+                }
 
                 return (
                   <React.Fragment key={index}>
@@ -166,6 +189,11 @@ const BlockList: FC<{currency: string, network: string}> = ({currency, network})
                           }
                           <img src={Cube} style={{height: '1.2rem'}} alt='cube' />
                           {block.height}
+                          {block.posData && (
+                            <ConsensusTag $pos={block.posData.isProofOfStake}>
+                              {block.posData.isProofOfStake ? 'PoS' : 'PoW'}
+                            </ConsensusTag>
+                          )}
                         </span>
                       </td>
                       <td>{getFormattedDate(block.time)}</td>

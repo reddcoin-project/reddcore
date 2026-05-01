@@ -78,8 +78,14 @@ const TransactionDetails: FC<TransactionDetailsProps> = ({
   const theme = useTheme();
   const [formattedInputs, setFormattedInputs] = useState<any[]>();
   const [lib, setLib] = useState<any>(getLib(currency));
+  // The block-details view passes synthesized `isCoinstake`/`stakeReward`
+  // fields (computed from the coins endpoint + block.posData), while the
+  // single-tx view fetches directly from the API which now serves
+  // `coinstake`/`stakeReward` natively. Accept either spelling.
   const {outputs, txid, blockTime, blockHeight, coinbase, inputs, confirmations, fee, value} =
     transaction;
+  const isCoinstake = (transaction as any).coinstake || (transaction as any).isCoinstake;
+  const stakeReward = (transaction as any).stakeReward;
   const goToAddress = (address: any) => {
     return navigate(`/${currency}/${network}/address/${address}`);
   };
@@ -319,7 +325,20 @@ const TransactionDetails: FC<TransactionDetailsProps> = ({
 
       <TransactionTileFlex>
         <div>
-          {!coinbase && fee > 0 && (
+          {coinbase && (
+            <TransactionChip primary>COINBASE</TransactionChip>
+          )}
+          {isCoinstake && (
+            <>
+              <TransactionChip primary>COINSTAKE</TransactionChip>
+              {stakeReward !== undefined && (
+                <TransactionChip>
+                  STAKE REWARD: {getConvertedValue(stakeReward, currency)} {currency}
+                </TransactionChip>
+              )}
+            </>
+          )}
+          {!coinbase && !isCoinstake && fee > 0 && (
             <TransactionChip>
               FEE: {getConvertedValue(fee, currency)} {currency}
             </TransactionChip>
