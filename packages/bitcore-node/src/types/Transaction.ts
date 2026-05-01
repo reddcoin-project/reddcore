@@ -7,7 +7,11 @@ export interface TransactionJSON {
   blockTime: string;
   blockTimeNormalized: string;
   coinbase: boolean;
+  /** Reddcoin PoSV-only; absent on chains without a stake mechanism. */
+  coinstake?: boolean;
   fee: number;
+  /** For coinstake txs: subsidy + collected_fees. Absent otherwise. */
+  stakeReward?: number;
   size: number;
   locktime: number;
   inputCount: number;

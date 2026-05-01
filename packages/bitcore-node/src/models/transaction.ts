@@ -27,6 +27,20 @@ const MAX_BATCH_SIZE = 50000;
 
 export type IBtcTransaction = ITransaction & {
   coinbase: boolean;
+  /**
+   * True for the second transaction of a Reddcoin PoSV block — i.e. the
+   * coinstake. The flag is omitted (undefined) on chains that do not
+   * have a stake mechanism, so existing BTC/BCH/ETH/etc indices are
+   * unaffected.
+   */
+  coinstake?: boolean;
+  /**
+   * For coinstake txs, this is `sum(outputs) - sum(inputs)` and equals
+   * `subsidy + collected_fees`. Stored as a positive integer on the
+   * coinstake row instead of the meaningless negative `fee` value the
+   * upstream `inputs - outputs` formula would produce.
+   */
+  stakeReward?: number;
   locktime: number;
   inputCount: number;
   outputCount: number;
@@ -91,7 +105,9 @@ export interface TxOp {
         blockTime?: Date;
         blockTimeNormalized?: Date;
         coinbase: boolean;
+        coinstake?: boolean;
         fee: number;
+        stakeReward?: number;
         size: number;
         locktime: number;
         inputCount: number;
@@ -349,8 +365,27 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
         const spentWallets = spent.wallets || [];
         const txWallets = mintedWallets.concat(spentWallets);
         const wallets = uniqBy(txWallets, wallet => wallet.toHexString());
+
+        // Reddcoin PoSV: bitcore-lib-redd's Transaction prototype carries
+        // isCoinStake(); upstream chains (BTC/BCH/DOGE/LTC) do not. The
+        // duck-typed check keeps this branch zero-cost for those chains
+        // and avoids wiring chain-keyed dispatch through the singleton
+        // storage layer.
+        const isCoinstake =
+          typeof (tx as any).isCoinStake === 'function' && (tx as any).isCoinStake();
+
         let fee = 0;
-        if (groupedSpends[txid]) {
+        let stakeReward: number | undefined;
+        if (isCoinstake) {
+          // Coinstakes don't pay a fee — they collect (subsidy + fees).
+          // The "negative fee" the upstream `inputs - outputs` formula
+          // produces is exactly that reward expressed as a debt; flip
+          // the sign and store it as stakeReward so consumers get a
+          // meaningful positive number.
+          if (groupedSpends[txid]) {
+            stakeReward = tx.outputAmount - groupedSpends[txid].total;
+          }
+        } else if (groupedSpends[txid]) {
           // TODO: Fee is negative for mempool txs
           fee = groupedSpends[txid].total - tx.outputAmount;
           if (fee < 0) {
@@ -370,7 +405,9 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
                 blockTime,
                 blockTimeNormalized,
                 coinbase: tx.isCoinbase(),
+                ...(isCoinstake && { coinstake: true }),
                 fee,
+                ...(stakeReward !== undefined && { stakeReward }),
                 size: tx.toBuffer().length,
                 locktime: tx.nLockTime,
                 inputCount: tx.inputs.length,
@@ -736,11 +773,13 @@ export class TransactionModel extends BaseTransaction<IBtcTransaction> {
       blockTime: tx.blockTime ? tx.blockTime.toISOString() : '',
       blockTimeNormalized: tx.blockTimeNormalized ? tx.blockTimeNormalized.toISOString() : '',
       coinbase: tx.coinbase || false,
+      ...(tx.coinstake && { coinstake: true }),
       locktime: tx.locktime || -1,
       inputCount: tx.inputCount || -1,
       outputCount: tx.outputCount || -1,
       size: tx.size || -1,
       fee: tx.fee || -1,
+      ...(tx.stakeReward !== undefined && { stakeReward: tx.stakeReward }),
       value: tx.value || -1
     };
     if (tx.blockHeight === SpentHeightIndicators.conflicting) {

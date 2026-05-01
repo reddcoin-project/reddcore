@@ -17,6 +17,13 @@ export type IBtcBlock = IBlock & {
   bits: number;
   nonce: number;
   feeData?: FeeData;
+  /**
+   * Reddcoin PoSV-only. Populated when the chain module knows how to
+   * detect Proof-of-Stake blocks. `subsidy` and `totalFeesCollected`
+   * sum to the staker's reward (the coinstake's `stakeReward` field
+   * on the second transaction). Absent on PoW-only chains.
+   */
+  posData?: PosData;
 };
 
 interface FeeData {
@@ -24,6 +31,12 @@ interface FeeData {
   median: number;
   mode: number;
   feeTotal: number;
+}
+
+interface PosData {
+  isProofOfStake: boolean;
+  subsidy: number;
+  totalFeesCollected: number;
 }
 
 @LoggifyClass
@@ -95,8 +108,12 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
     }
 
     const feeData = await this.getBlockFee({ chain, network, blockId: block.hash });
+    const posData = await this.getPosData({ chain, network, blockId: block.hash });
 
-    await this.collection.updateOne({ hash: convertedBlock.hash, chain, network }, { $set: { processed: true, feeData } });
+    await this.collection.updateOne(
+      { hash: convertedBlock.hash, chain, network },
+      { $set: { processed: true, feeData, ...(posData && { posData }) } }
+    );
   }
 
   async getBlockOp(params: { block: BitcoinBlockType; chain: string; network: string; initialHeight?: number }) {
@@ -214,7 +231,8 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
       /*
        *minedBy: BlockModel.getPoolInfo(block.minedBy)
        */
-      feeData: block.feeData
+      feeData: block.feeData,
+      ...(block.posData && { posData: block.posData })
     };
     if (options && options.object) {
       return transform;
@@ -228,7 +246,7 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
     blockId: string;
   }) : Promise<FeeData> {
     const { chain, network, blockId } = params;
-    const transactions = blockId.length >= 64 
+    const transactions = blockId.length >= 64
       ? await TransactionStorage.collection.find({ chain, network, blockHash: blockId }).toArray()
       : await TransactionStorage.collection.find({ chain, network, blockHeight: parseInt(blockId, 10) }).toArray();
     if (transactions.length <= 1)
@@ -240,17 +258,22 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
     const freq = {};
     let mode = 0, maxCount = 0;
     for (const tx of transactions) {
-      if (tx.coinbase) continue; // skip coinbase transaction
+      if (tx.coinbase || tx.coinstake) continue; // skip coinbase + Reddcoin coinstake — neither pays a fee
       const rate = tx.fee && tx.size ? tx.fee / tx.size : 0; // does not add fee rate 0 or divide by zero
       feeRates.push(rate);
       feeRateSum += rate;
       feeTotal += tx.fee || 0;
-      
+
       freq[rate] = (freq[rate] || 0) + 1;
       if (freq[rate] > maxCount) {
         mode = rate;
         maxCount = freq[rate];
       }
+    }
+    if (feeRates.length === 0) {
+      // PoS block with only the coinbase placeholder + coinstake: no
+      // user-tx fees to aggregate. Return zeros instead of NaN/undefined.
+      return { feeTotal: 0, mean: 0, median: 0, mode: 0 };
     }
     const mean = feeRateSum / feeRates.length;
     feeRates.sort((a, b) => a - b);
@@ -259,6 +282,40 @@ export class BitcoinBlock extends BaseBlock<IBtcBlock> {
       : (feeRates[feeRates.length / 2 - 1] + feeRates[feeRates.length / 2]) / 2;
 
     return { feeTotal, mean, median, mode };
+  }
+
+  /**
+   * Reddcoin PoSV-only. Only populated when a coinstake is present on
+   * the block; non-Reddcoin chains and pre-PoSV Reddcoin PoW blocks
+   * return undefined and the block document is left without a posData
+   * field. For PoS blocks:
+   *   subsidy             = stakeReward - totalFeesCollected
+   *   totalFeesCollected  = sum of fees from all non-coinbase,
+   *                         non-coinstake transactions in the block
+   * The staker's full take is `subsidy + totalFeesCollected`, equal to
+   * the coinstake transaction's stakeReward field.
+   */
+  async getPosData(params: {
+    chain: string;
+    network: string;
+    blockId: string;
+  }) : Promise<PosData | undefined> {
+    const { chain, network, blockId } = params;
+    const transactions = blockId.length >= 64
+      ? await TransactionStorage.collection.find({ chain, network, blockHash: blockId }).toArray()
+      : await TransactionStorage.collection.find({ chain, network, blockHeight: parseInt(blockId, 10) }).toArray();
+
+    const coinstake = transactions.find(tx => tx.coinstake);
+    if (!coinstake) return undefined;
+
+    let totalFeesCollected = 0;
+    for (const tx of transactions) {
+      if (tx.coinbase || tx.coinstake) continue;
+      totalFeesCollected += tx.fee || 0;
+    }
+    const stakeReward = coinstake.stakeReward || 0;
+    const subsidy = stakeReward - totalFeesCollected;
+    return { isProofOfStake: true, subsidy, totalFeesCollected };
   }
 }
 
