@@ -7,6 +7,7 @@ import { EthValidation } from './eth';
 import { LtcValidation } from './ltc';
 import { MaticValidation } from './matic';
 import { OpValidation } from './op';
+import { ReddValidation } from './redd';
 import { SolValidation } from './sol';
 import { XrpValidation } from './xrp';
 import type { IValidation } from '../types/validation';
@@ -18,6 +19,7 @@ const validation: { [chain: string]: IValidation } = {
   XRP: new XrpValidation(),
   DOGE: new DogeValidation(),
   LTC: new LtcValidation(),
+  RDD: new ReddValidation(),
   MATIC: new MaticValidation(),
   ARB: new ArbValidation(),
   BASE: new BaseValidation(),

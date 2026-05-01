@@ -6,7 +6,10 @@ import { ERC20Abi } from './abi';
 export class ERC20TxProvider extends ETHTxProvider {
   getERC20Contract(tokenContractAddress: string) {
     const web3 = new Web3();
-    const contract = new web3.eth.Contract(ERC20Abi as AbiItem[], tokenContractAddress);
+    // web3 v4 narrowed ContractAbi to a readonly tuple of fragment-literal
+    // types; runtime accepts AbiItem[] fine but the type can't be expressed
+    // for an externally-loaded JSON ABI.
+    const contract = new web3.eth.Contract(ERC20Abi as AbiItem[] as any, tokenContractAddress);
     return contract;
   }
 

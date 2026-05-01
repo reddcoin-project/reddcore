@@ -8,6 +8,7 @@ import { LtcDeriver } from './ltc';
 import { MaticDeriver } from './matic';
 import { OpDeriver } from './op';
 import { Paths } from './paths';
+import { ReddDeriver } from './redd';
 import { SolDeriver } from './sol';
 import { XrpDeriver } from './xrp';
 import type { IDeriver } from '../types/derivation';
@@ -19,6 +20,7 @@ const derivers: { [chain: string]: IDeriver } = {
   XRP: new XrpDeriver(),
   DOGE: new DogeDeriver(),
   LTC: new LtcDeriver(),
+  RDD: new ReddDeriver(),
   MATIC: new MaticDeriver(),
   ARB: new ArbDeriver(),
   BASE: new BaseDeriver(),

@@ -19,6 +19,11 @@ describe('Address Validation', () => {
   const ltcAddress = 'LYgDcZ3oW3aZBhZUyiC84fb99hyUPVxLwB';
   const ltcTestAddress = 'QhpBFbYvLG2bgCZ3D1ztGEUVqmcgY5vjVF';
 
+  // RDD — derived from secp256k1 priv 1 on Reddcoin networks (well-known generator-point fixture)
+  const reddAddress = 'RjJ4cn5Bg58D2khGiNRmQW1yWtA6Py9kWa';
+  const reddTestAddress = 'mrCDrCybB6J1vRfbwM5hemdJz73FwDBC8r';
+  const reddBech32Address = 'rdd1qw508d6qejxtdg4y5r3zarvary0c5xw7ks0ue9n';
+
   // ETH
   const ethAddress = '37d7B3bBD88EFdE6a93cF74D2F5b0385D3E3B08A';
   const prefixEthAddress = '0x37d7B3bBD88EFdE6a93cF74D2F5b0385D3E3B08A';
@@ -38,6 +43,8 @@ describe('Address Validation', () => {
   const bchUri = 'bitcoincash:pp8skudq3x5hzw8ew7vzsw8tn4k8wxsqsv0lt0mf3g';
   const dogeUri = 'dogecoin:DQnSpKaUdXYZz8Q4WUBCdaGBSthiAJbWBr';
   const ltcUri = 'litecoin:LYgDcZ3oW3aZBhZUyiC84fb99hyUPVxLwB';
+  const reddUri = 'reddcoin:RjJ4cn5Bg58D2khGiNRmQW1yWtA6Py9kWa';
+  const reddTestUri = 'reddcoin:mrCDrCybB6J1vRfbwM5hemdJz73FwDBC8r';
   const ethUri = 'ethereum:0x37d7B3bBD88EFdE6a93cF74D2F5b0385D3E3B08A';
   const ethUriParams = 'ethereum:0x37d7B3bBD88EFdE6a93cF74D2F5b0385D3E3B08A?value=123&gasPrice=123&gas=123&gasLimit=123';
   const ethUriSingleParam = 'ethereum:0x37d7B3bBD88EFdE6a93cF74D2F5b0385D3E3B08A?value=123';
@@ -58,6 +65,7 @@ describe('Address Validation', () => {
   const invalidBchAddress = 'r8uujscckc56ancdkmqnyyl2rx6pnp24gmdfrf8qd';
   const invalidDogeAddress = 'DQnSpKaUdXYZz8Q4WUBCdaGBSthiAJbWB';
   const invalidLtcAddress = 'LYgDcZ3oW3aZBhZUyiC84fb99hyUPVxLw';
+  const invalidReddAddress = 'RjJ4cn5Bg58D2khGiNRmQW1yWtA6Py9kW'; // truncated — checksum fails
   const invalidEthAddress = '37d7B3bBD88EFdE6a93cF74D2F5b0385D3E3B08';
   const invalidXrpAddress = 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTH';
   const invalidMaticAddress = '57d7B3bBD88EFdE6a93cF74D2F5b0385D3E3B08';
@@ -98,6 +106,17 @@ describe('Address Validation', () => {
     const isValidTestAddress = await Validation.validateAddress('LTC', 'testnet', ltcTestAddress);
     expect(isValidAddress).to.equal(true);
     expect(isValidTestAddress).to.equal(true);
+  });
+
+  it('should be able to validate an RDD address (legacy + bech32, mainnet + testnet)', async () => {
+    const isValidLegacy = await Validation.validateAddress('RDD', 'mainnet', reddAddress);
+    const isValidBech32 = await Validation.validateAddress('RDD', 'mainnet', reddBech32Address);
+    const isValidTestnet = await Validation.validateAddress('RDD', 'testnet', reddTestAddress);
+    const isInvalid = await Validation.validateAddress('RDD', 'mainnet', invalidReddAddress);
+    expect(isValidLegacy).to.equal(true);
+    expect(isValidBech32).to.equal(true);
+    expect(isValidTestnet).to.equal(true);
+    expect(isInvalid).to.equal(false);
   });
 
   it('should be able to validate an ETH address', async () => {
@@ -143,6 +162,13 @@ describe('Address Validation', () => {
   it('should be able to validate an LTC Uri', async () => {
     const isValidUri = await Validation.validateUri('LTC', ltcUri);
     const isValidTestUri = await Validation.validateUri('LTC', ltcTestUri);
+    expect(isValidUri).to.equal(true);
+    expect(isValidTestUri).to.equal(true);
+  });
+
+  it('should be able to validate an RDD Uri', async () => {
+    const isValidUri = await Validation.validateUri('RDD', reddUri);
+    const isValidTestUri = await Validation.validateUri('RDD', reddTestUri);
     expect(isValidUri).to.equal(true);
     expect(isValidTestUri).to.equal(true);
   });

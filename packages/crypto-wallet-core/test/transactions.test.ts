@@ -788,6 +788,49 @@ describe('Transaction', function() {
       expect(signed).to.eq(expected);
     });
 
+    it('should create and sign an RDD tx', () => {
+      // Same UTXO + key shape as the LTC test above (testnet addresses
+      // happen to share BTC's pubkeyhash byte 0x6f). We don't pin the
+      // exact signed hex because PoSV serialisation appends an nTime
+      // field for v2+ txs that BTC's format doesn't carry — instead
+      // assert the tx round-trips through bitcore-lib-redd's parser
+      // and the input/output amounts are preserved.
+      const recipients = [{ address: 'mpNpzMoprLnSBu8CWDunNCYeJq3Mzdk59V', amount: 1e8 }];
+      const change = 'msnAsQcCdtzDyiSWb4ZnNxFwUy3P9ogQvY';
+      const utxos = [
+        {
+          mintTxid: '643ec66d6c4cad4cbdb8ed2166b8078975e0af9bb7ff7e30d394f43b0d9f18ab',
+          mintIndex: 0,
+          value: 2e8, // > recipient + fee so selectCoins is satisfied with one utxo
+          mintHeight: 1,
+          script: '76a9144e744a19a009a9dd43a23a7c12045c83e82ac9d288ac',
+          address: 'mnfnJx2xWWptYmBzck3rdE851Dtu9GaZ3F',
+          sequenceNumber: 4294967294
+        }
+      ];
+      const fee = 7440;
+      const tx = Transactions.create({ chain: 'RDD', recipients, change, utxos, fee, rbf: true });
+      expect(tx).to.be.a('string').and.match(/^[0-9a-f]+$/);
+
+      const keys = [
+        { address: 'mnfnJx2xWWptYmBzck3rdE851Dtu9GaZ3F', privKey: 'cSFjiifSbZ2hU4jTFwE993LCe2rkZGULCTGWTDWXzHvuXRKxpnc1' }
+      ];
+      const signed = Transactions.sign({ chain: 'RDD', tx, keys, utxos });
+      expect(signed).to.be.a('string').and.match(/^[0-9a-f]+$/);
+      // signed tx must be longer than unsigned (script-sig added)
+      expect(signed.length).to.be.greaterThan(tx.length);
+
+      // Parse the signed bytes back through bitcore-lib-redd and check the
+      // input + output amounts reconcile.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const Redd = require('@reddcoinproject/bitcore-lib-redd');
+      const parsed = new Redd.Transaction(signed);
+      expect(parsed.inputs).to.have.length(1);
+      expect(parsed.outputs).to.have.length(2); // recipient + change
+      const totalOut = parsed.outputs.reduce((a, o) => a + o.satoshis, 0);
+      expect(totalOut).to.equal(2e8 - fee);
+    });
+
     it('should be able to create a livenet SOL tx', () => {
       const rawMaticTx = {
         network: 'livenet',

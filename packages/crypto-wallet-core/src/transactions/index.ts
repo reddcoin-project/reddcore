@@ -19,6 +19,7 @@ import {
 } from './matic';
 import { MATICMULTISIGTxProvider } from './matic-multisig';
 import { OPERC20TxProvider, OPTxProvider } from './op';
+import { RDDTxProvider } from './redd';
 import { SOLTxProvider } from './sol';
 import { SPLTxProvider } from './spl';
 import { XRPTxProvider } from './xrp';
@@ -32,6 +33,7 @@ const providers = {
   XRP: new XRPTxProvider(),
   DOGE: new DOGETxProvider(),
   LTC: new LTCTxProvider(),
+  RDD: new RDDTxProvider(),
   MATIC: new MATICTxProvider(),
   MATICMULTISIG: new MATICMULTISIGTxProvider(),
   MATICERC20: new MATICERC20TxProvider(),

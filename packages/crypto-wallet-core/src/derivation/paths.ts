@@ -21,6 +21,9 @@ export const Paths = {
   LTC: {
     default: "m/44'/2'/"
   },
+  RDD: {
+    default: "m/44'/4'/" // SLIP-0044 coin type for Reddcoin
+  },
   MATIC: {
     default: "m/44'/60'/", // the official matic derivation path is 966 but users will expect address to be same as ETH
   },

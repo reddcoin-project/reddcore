@@ -52,6 +52,18 @@ describe('Address Derivation', () => {
     expect(address).to.equal(expectedAddress);
   });
 
+  it('should be able to generate a valid RDD address', () => {
+    const xPub = 'xpub6DFNnB4rMWPcwqrZsyDQKTeoQeGS9kgve4nwLJfkeYaSLRW9kV72aH4kAeT6eFLm9ZCZEUxEs4fgW7jLPEqvBqxtJagS6Zi3S5kBQwTvuzX';
+    // 'select scout crash enforce riot rival spring whale hollow radar rule sentence' at m/44'/4'/0'
+
+    const path = Deriver.pathFor('RDD', 'mainnet');
+    expect(path).to.equal("m/44'/4'/0'");
+
+    const address = Deriver.deriveAddress('RDD', 'mainnet', xPub, 0, false);
+    const expectedAddress = 'RgbLpjGvvh3aAdwQdMTCamW4pNitZxf2i2';
+    expect(address).to.equal(expectedAddress);
+  });
+
   it('should be able to generate a valid ETH address', () => {
     const xPub = 'xpub6D8rChqkgFuaZULuq2n6VrS4zB5Cmv24gcRc889dFRRgYAH1CGQmQZ9kcPfMAfWGPnyMd1X5foBYFmJ5ZPfvwhm6tXjaY13ao1rQHRtkKDv';
     // 'select scout crash enforce riot rival spring whale hollow radar rule sentence';

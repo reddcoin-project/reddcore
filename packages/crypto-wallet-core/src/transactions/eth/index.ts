@@ -89,7 +89,7 @@ export class ETHTxProvider {
 
   getMultiSendContract(tokenContractAddress: string) {
     const web3 = new Web3();
-    return new web3.eth.Contract(MULTISENDAbi as AbiItem[], tokenContractAddress);
+    return new web3.eth.Contract(MULTISENDAbi as AbiItem[] as any, tokenContractAddress);
   }
 
   getPriorityFeeMinimum(chainId: number) {

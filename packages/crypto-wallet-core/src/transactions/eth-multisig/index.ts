@@ -6,7 +6,7 @@ import { MultisigAbi } from './abi';
 export class ETHMULTISIGTxProvider extends ETHTxProvider {
   getMultisigContract(multisigContractAddress: string) {
     const web3 = new Web3();
-    const contract = new web3.eth.Contract(MultisigAbi as AbiItem[], multisigContractAddress);
+    const contract = new web3.eth.Contract(MultisigAbi as AbiItem[] as any, multisigContractAddress);
     return contract;
   }
 
