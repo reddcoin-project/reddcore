@@ -171,6 +171,7 @@ Peer.prototype._addSocketEventHandlers = function() {
     try {
       self._readMessage();
     } catch (e) {
+      console.warn('[bitcore-p2p-redd] disconnecting peer; message parse failed:', e && e.message || e);
       return self.disconnect();
     }
   });

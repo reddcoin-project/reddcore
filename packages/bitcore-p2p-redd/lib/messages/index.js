@@ -29,6 +29,7 @@ function Messages(options) {
     options = {};
   }
   this.network = options.network || bitcore.Networks.defaultNetwork;
+  this._loggedUnsupported = {};
 }
 
 Messages.MINIMUM_LENGTH = 20;
@@ -99,7 +100,11 @@ Messages.prototype._discardUntilNextMessage = function(dataBuffer) {
 
 Messages.prototype._buildFromBuffer = function(command, payload) {
   if (!this.builder.commands[command]) {
-    throw new Error('Unsupported message command: ' + command);
+    if (!this._loggedUnsupported[command]) {
+      this._loggedUnsupported[command] = true;
+      console.warn('Unsupported message command (ignored): ' + command);
+    }
+    return;
   }
   return this.builder.commands[command].fromBuffer(payload);
 };
