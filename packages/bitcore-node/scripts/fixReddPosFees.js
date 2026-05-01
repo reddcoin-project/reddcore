@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 /**
  * One-off backfill for Reddcoin PoSV blocks indexed before the
@@ -24,9 +25,9 @@
  *   node scripts/fixReddPosFees.js [--network mainnet] [--dry-run] [--verbose]
  */
 
-import { BitcoinBlockStorage } from '../build/src/models/block';
-import { TransactionStorage } from '../build/src/models/transaction';
-import { Storage } from '../build/src/services/storage';
+const { BitcoinBlockStorage } = require('../build/src/models/block');
+const { TransactionStorage } = require('../build/src/models/transaction');
+const { Storage } = require('../build/src/services/storage');
 
 function usage(errMsg) {
   console.log('USAGE: ./fixReddPosFees [options]');
