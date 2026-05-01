@@ -52,6 +52,16 @@ const populateTxsForBlock = (
   // PoSV invariant: every PoS block has tx[0] = coinbase placeholder
   // and tx[1] = coinstake. The /block/<hash>/coins endpoint returns
   // txids in block order, so the second entry is the coinstake.
+  //
+  // We accept *either* signal as evidence the second tx is a coinstake:
+  //   1. block.posData.isProofOfStake (server-truth — only present after
+  //      the indexer / backfill has populated it)
+  //   2. tx.outputs[0].value === 0 (the empty marker output on the
+  //      coinstake — a structural property that holds for every PoSV
+  //      coinstake regardless of whether posData has been backfilled
+  //      yet, so the COINSTAKE badge shows up even on un-backfilled
+  //      historical blocks)
+  // Either way it requires inputs.length > 0 (rules out a coinbase).
   const txd = txData.txids.map((txid: any, index: number) => {
     const tx: any = {};
     tx.txid = txid;
@@ -59,7 +69,9 @@ const populateTxsForBlock = (
     tx.outputs = txData.outputs.filter((output: any) => output.mintTxid === txid);
     tx.coinbase = tx.inputs.length === 0;
     tx.isCoinBase = tx.coinbase;
-    tx.isCoinstake = isPoS && index === 1 && tx.inputs.length > 0;
+    const couldBeCoinstake = index === 1 && tx.inputs.length > 0;
+    const hasMarkerOutput = couldBeCoinstake && tx.outputs[0]?.value === 0;
+    tx.isCoinstake = couldBeCoinstake && (isPoS || hasMarkerOutput);
     if (tx.isCoinstake) {
       const inputsTotal = tx.inputs.reduce((a: any, b: any) => a + b.value, 0);
       const outputsTotal = tx.outputs.reduce((a: any, b: any) => a + b.value, 0);
