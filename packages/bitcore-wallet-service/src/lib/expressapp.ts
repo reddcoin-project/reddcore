@@ -222,7 +222,8 @@ export class ExpressApp {
      * @returns Array<Promise>
      */
     const getServerWithMultiAuth: Types.GetServerWithMultiAuthFn = (req, res, opts = {}) => {
-      const identities = req.headers['x-identities'] ? req.headers['x-identities'].split(',') : false;
+      const identitiesHeader = Utils.firstString(req.headers['x-identities']);
+      const identities = identitiesHeader ? identitiesHeader.split(',') : false;
       const signature = req.headers['x-signature'];
       if (!identities || !signature) {
         throw Errors.NOT_AUTHORIZED;
@@ -539,7 +540,7 @@ export class ExpressApp {
         server => {
           const opts = {
             identifier: req.params['identifier'],
-            walletCheck: ['1', 'true'].includes(req.query['walletCheck'])
+            walletCheck: ['1', 'true'].includes(Utils.firstString(req.query['walletCheck']))
           };
           server.getWalletFromIdentifier(opts, (err, wallet) => {
             if (err) return returnError(err, res, req);
@@ -829,12 +830,16 @@ export class ExpressApp {
     });
 
     // DEPRECATED (default noChange=1)
-    router.get('/v1/addresses/', (req, res) => {
+    router.get('/v1/addresses/', (req, res, next) => {
       logDeprecated(req);
       req.query.noChange = req.query.noChange ?? '1'; // default to no change addresses (backward compatibility)
       req.redirectedUrl = req.url;
       req.url = '/v2/addresses?' + Object.entries(req.query).map(([key, value]) => `${key}=${value}`).join('&');
-      router.handle(req, res);
+      // `.handle` is the public Router dispatch method but isn't on
+      // Express's IRouter type — cast through `any` to reach it without
+      // changing runtime behaviour. Also pass `next` so the router can
+      // bubble up "no matching route" instead of hanging the request.
+      (router as any).handle(req, res, next);
     });
 
     router.get('/v2/addresses/', (req, res) => {
@@ -844,9 +849,14 @@ export class ExpressApp {
         if (req.query.skip) opts.skip = +req.query.skip;
         opts.reverse = req.query.reverse == '1';
         if (req.query.addresses) {
-          opts.addresses = Array.isArray(req.query.addresses)
-            ? req.query.addresses
-            : req.query.addresses.split(',');
+          // `req.query.addresses` is `string | string[] | ParsedQs | …`;
+          // narrow to a string array regardless of which form we got.
+          const a = req.query.addresses;
+          if (Array.isArray(a)) {
+            opts.addresses = a as string[];
+          } else if (typeof a === 'string') {
+            opts.addresses = a.split(',');
+          }
         }
         opts.noChange = Utils.castToBool(req.query.noChange);
 

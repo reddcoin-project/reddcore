@@ -1,10 +1,13 @@
 import express from 'express';
 import * as Types from '../../types/expressapp';
+import { Common } from '../common';
 import { TssKeyGen, TssSign } from '../tss';
 import { authRequest } from './middleware/authRequest';
 import { authTssRequest } from './middleware/authTssRequest';
 import { createWalletLimiter } from './middleware/createWalletLimiter';
 import { verifyTssMessage } from './middleware/verifyTssMessage';
+
+const { Utils } = Common;
 
 
 interface TssRouterOpts {
@@ -25,7 +28,7 @@ export class TssRouter {
       try {
         const id = req.params.id;
         const { message, n, password } = req.body;
-        const copayerId = req.headers['x-identity'];
+        const copayerId = Utils.firstString(req.headers['x-identity']);
         await TssKeyGen.processMessage({ id, message, n, password, copayerId });
         return res.send();
       } catch (err) {
@@ -36,7 +39,7 @@ export class TssRouter {
     router.get('/v1/tss/keygen/:id/:round', authTssRequest(), async function(req, res) {
       try {
         const { id, round } = req.params as { [key: string]: string };
-        const copayerId = req.headers['x-identity'];
+        const copayerId = Utils.firstString(req.headers['x-identity']);
         if (round === 'secret') {
           const secret = await TssKeyGen.getBwsJoinSecret({ id, copayerId });
           return res.json({ secret });
@@ -51,7 +54,7 @@ export class TssRouter {
     router.post('/v1/tss/keygen/:id/store', authTssRequest(), async function(req, res) {
       try {
         const id = req.params.id;
-        const copayerId = req.headers['x-identity'];
+        const copayerId = Utils.firstString(req.headers['x-identity']);
         const message = req.body;
 
         await TssKeyGen.storeKey({ id, message, copayerId });
@@ -65,7 +68,7 @@ export class TssRouter {
       try {
         const id = req.params.id;
         const { secret } = req.body;
-        const copayerId = req.headers['x-identity'];
+        const copayerId = Utils.firstString(req.headers['x-identity']);
         await TssKeyGen.storeBwsJoinSecret({ id, secret, copayerId });
         return res.send();
       } catch (err) {
@@ -76,7 +79,7 @@ export class TssRouter {
     router.get('/v1/tss/keygen/:id/secret', authTssRequest(), async function(req, res) {
       try {
         const id = req.params.id;
-        const copayerId = req.headers['x-identity'];
+        const copayerId = Utils.firstString(req.headers['x-identity']);
         const secret = await TssKeyGen.getBwsJoinSecret({ id, copayerId });
         return res.json({ secret });
       } catch (err) {
@@ -88,7 +91,7 @@ export class TssRouter {
       try {
         const id = req.params.id;
         const { message, m } = req.body;
-        const copayerId = req.headers['x-identity'];
+        const copayerId = Utils.firstString(req.headers['x-identity']);
         await TssSign.processMessage({ id, message, m, copayerId });
         return res.send();
       } catch (err) {
@@ -99,7 +102,7 @@ export class TssRouter {
     router.get('/v1/tss/sign/:id/:round', authTssRequest(), async function(req, res) {
       try {
         const { id, round } = req.params as { [key: string]: string };
-        const copayerId = req.headers['x-identity'];
+        const copayerId = Utils.firstString(req.headers['x-identity']);
         const { messages, signature, participants } = await TssSign.getMessagesForParty({ id, round: parseInt(round), copayerId });
         return res.json({ messages, signature, participants });
       } catch (err) {

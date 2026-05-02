@@ -53,6 +53,22 @@ export const Utils = {
   },
 
   /**
+   * Narrow Express's `req.headers[…]` / `req.query[…]` access from
+   * `string | string[] | undefined` (or `string | ParsedQs | …[]`) down
+   * to `string | undefined`, preserving the runtime behaviour of taking
+   * the first occurrence when a header/param appears multiple times.
+   * Used by route handlers that consume identity / pagination /
+   * filter values where only a single string is meaningful.
+   */
+  firstString(v: string | string[] | undefined | unknown): string | undefined {
+    if (Array.isArray(v)) {
+      const first = v[0];
+      return typeof first === 'string' ? first : undefined;
+    }
+    return typeof v === 'string' ? v : undefined;
+  },
+
+  /**
    * Checks if val is numeric within the confines of Number
    * e.g. '1', 1, '1.1', -1, '-1', 0, '0' are all valid numbers. Null is not. BigInts are not.
    * @param val

@@ -4,7 +4,10 @@ import { Common } from '../common';
 const Defaults = Common.Defaults;
 
 export interface ISession {
-  id: number;
+  // UUIDv4 string — was incorrectly typed as number in upstream. The
+  // actual runtime value comes from Uuid.v4() and is persisted as a
+  // string in Mongo and read by handlers as a string.
+  id: string;
   version: number;
   createdOn: number;
   updatedOn: number;
@@ -12,7 +15,7 @@ export interface ISession {
   walletId: string;
 }
 export class Session {
-  id: number;
+  id: string;
   version: number;
   createdOn: number;
   updatedOn: number;

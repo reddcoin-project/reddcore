@@ -56,7 +56,11 @@ export class V8 {
   host: string;
   userAgent: string;
   baseUrl: string;
-  request: request;
+  // `request-promise-native` is imported as a namespace; the value is
+  // callable (the function typed as RequestPromiseAPI from its `.d.ts`).
+  // `typeof request` captures the right shape without leaking namespace
+  // syntax into a type position.
+  request: typeof request;
   Client: typeof Client;
   private _cachedReserve: number;
   private _cachedReserveTs: number;
@@ -67,7 +71,7 @@ export class V8 {
     url: string;
     apiPrefix?: string;
     userAgent?: string;
-    request?: request;
+    request?: typeof request;
     client?: typeof Client;
   }) {
     $.checkArgument(opts);
