@@ -3,7 +3,8 @@ import {
   BitcoreLib as Bitcore,
   BitcoreLibCash,
   BitcoreLibDoge,
-  BitcoreLibLtc
+  BitcoreLibLtc,
+  BitcoreLibRedd
 } from '@bitpay-labs/crypto-wallet-core';
 import * as async from 'async';
 import _ from 'lodash';
@@ -26,6 +27,7 @@ const Bitcore_ = {
   xrp: Bitcore,
   doge: BitcoreLibDoge,
   ltc: BitcoreLibLtc,
+  rdd: BitcoreLibRedd,
   arb: Bitcore,
   op: Bitcore,
   base: Bitcore,
@@ -56,11 +58,13 @@ export class V8 {
   host: string;
   userAgent: string;
   baseUrl: string;
-  // `request-promise-native` is imported as a namespace; the value is
-  // callable (the function typed as RequestPromiseAPI from its `.d.ts`).
-  // `typeof request` captures the right shape without leaking namespace
-  // syntax into a type position.
-  request: typeof request;
+  // Typed as `any` rather than `typeof request` because tests stub a
+  // tiny subset of the request-promise-native surface (e.g. just `.get`)
+  // and a strict module-shape type would reject those mocks. V8 itself
+  // only stores this handle and forwards it to Client, which exercises
+  // `.get` / `.post`; type safety lives in Client where the calls
+  // actually happen, not at this transit point.
+  request: any;
   Client: typeof Client;
   private _cachedReserve: number;
   private _cachedReserveTs: number;
@@ -71,7 +75,7 @@ export class V8 {
     url: string;
     apiPrefix?: string;
     userAgent?: string;
-    request?: typeof request;
+    request?: any;
     client?: typeof Client;
   }) {
     $.checkArgument(opts);
