@@ -74,6 +74,7 @@ export class BlockchainMonitor {
             xrp: {},
             doge: {},
             ltc: {},
+            rdd: {},
             arb: {},
             base: {},
             op: {},
