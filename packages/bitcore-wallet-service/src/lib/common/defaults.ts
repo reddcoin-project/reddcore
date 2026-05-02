@@ -362,6 +362,7 @@ export const Defaults = {
     xrp: 1000000000000,
     doge: 100000000 * 100,
     ltc: 10000 * 1000, // 10k sat/b
+    rdd: 100000000 * 100, // mirrors doge — high-supply chain, generous cap
     sol: 15000 // Lamports per signature
   },
 
@@ -376,6 +377,7 @@ export const Defaults = {
     xrp: 0,
     doge: 0,
     ltc: 0,
+    rdd: 0,
     sol: 0,
   },
 
@@ -389,7 +391,8 @@ export const Defaults = {
     op: 1 * 1e18, // 1 eth
     xrp: 1 * 1e6, // 1 xrp
     doge: 400 * 1e8,
-    ltc: 0.05 * 1e8
+    ltc: 0.05 * 1e8,
+    rdd: 400 * 1e8 // mirrors doge — high-supply chain, runaway-fee guard
   },
 
   // ETH
