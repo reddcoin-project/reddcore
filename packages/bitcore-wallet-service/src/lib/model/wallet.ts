@@ -3,6 +3,7 @@ import {
   BitcoreLibCash,
   BitcoreLibDoge,
   BitcoreLibLtc,
+  BitcoreLibRedd,
 } from '@bitpay-labs/crypto-wallet-core';
 import { singleton } from 'preconditions';
 import Uuid from 'uuid';
@@ -27,6 +28,7 @@ const Bitcore = {
   xrp: BitcoreLib,
   doge: BitcoreLibDoge,
   ltc: BitcoreLibLtc,
+  rdd: BitcoreLibRedd,
   sol: BitcoreLib,
 };
 

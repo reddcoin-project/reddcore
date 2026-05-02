@@ -3,6 +3,7 @@ import {
   BitcoreLibCash as BitcoreCash,
   BitcoreLibDoge as BitcoreDoge,
   BitcoreLibLtc as BitcoreLtc,
+  BitcoreLibRedd as BitcoreRedd,
   Validation
 } from '@bitpay-labs/crypto-wallet-core';
 import * as async from 'async';
@@ -74,6 +75,7 @@ const Bitcore_ = {
   xrp: Bitcore,
   doge: BitcoreDoge,
   ltc: BitcoreLtc,
+  rdd: BitcoreRedd,
   sol: Bitcore,
 };
 

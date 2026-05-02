@@ -3,6 +3,7 @@ import {
   BitcoreLibCash,
   BitcoreLibDoge,
   BitcoreLibLtc,
+  BitcoreLibRedd,
   Deriver
 } from '@bitpay-labs/crypto-wallet-core';
 import _ from 'lodash';
@@ -50,7 +51,8 @@ export class Address {
     btc: BitcoreLib,
     bch: BitcoreLibCash,
     doge: BitcoreLibDoge,
-    ltc: BitcoreLibLtc
+    ltc: BitcoreLibLtc,
+    rdd: BitcoreLibRedd
   };
 
   static create(opts) {
