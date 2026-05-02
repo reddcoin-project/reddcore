@@ -2198,6 +2198,19 @@ export class WalletService implements IWalletService {
 
       const feeLevels = Defaults.FEE_LEVELS[opts.chain];
 
+      // Defensive guard (BIT-13): a chain registered in Constants.CHAINS
+      // but missing from Defaults.FEE_LEVELS used to crash the entire
+      // process — `feeLevels.map(...)` inside samplePoints() throws,
+      // the failure escapes the Mongo callback, and BWS exits. Return
+      // an empty result instead so the caller gets a clean response
+      // and can fall back to wallet-supplied feePerKb. New chains
+      // should be added to Defaults.FEE_LEVELS to surface real data;
+      // this guard is just a safety net.
+      if (!feeLevels || !feeLevels.length) {
+        this.logw(`No fee levels configured for ${opts.chain}; returning empty.`);
+        return cb(null, []);
+      }
+
       /*
       if (opts.chain === 'doge') {
         const defaultDogeFeeLevels = feeLevels[0];

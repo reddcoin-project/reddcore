@@ -205,6 +205,17 @@ export const Defaults = {
         defaultValue: 100000000
       }
     ],
+    rdd: [
+      // Reddcoin block time is ~60s, so nbBlocks: 2 mirrors DOGE.
+      // defaultValue is sat/KB; 100M sats/KB = 1 RDD/KB, the same
+      // order-of-magnitude default we set in the wallet-client
+      // (Defaults.MAX_TX_FEE for 'rdd', see commit 4d0d2e92b).
+      {
+        name: 'normal',
+        nbBlocks: 2,
+        defaultValue: 100000000
+      }
+    ],
     ltc: [
       {
         name: 'urgent',
