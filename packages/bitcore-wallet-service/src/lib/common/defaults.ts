@@ -206,14 +206,17 @@ export const Defaults = {
       }
     ],
     rdd: [
-      // Reddcoin block time is ~60s, so nbBlocks: 2 mirrors DOGE.
-      // defaultValue is sat/KB; 100M sats/KB = 1 RDD/KB, the same
-      // order-of-magnitude default we set in the wallet-client
-      // (Defaults.MAX_TX_FEE for 'rdd', see commit 4d0d2e92b).
+      // Reddcoin block time is ~60s. defaultValue is sat/KB; 100k sat/KB
+      // = 0.001 RDD/KB, matching reddcoin Core's
+      //   DEFAULT_FALLBACK_FEE     (src/wallet/wallet.h:71)
+      //   DEFAULT_MIN_RELAY_TX_FEE (src/validation.h:66)
+      // both of which are 100000. Don't mirror DOGE here — DOGE's
+      // higher per-coin minfee is a quirk of its denomination,
+      // Reddcoin's fee structure is Litecoin-like.
       {
         name: 'normal',
         nbBlocks: 2,
-        defaultValue: 100000000
+        defaultValue: 100000
       }
     ],
     ltc: [
@@ -373,7 +376,7 @@ export const Defaults = {
     xrp: 1000000000000,
     doge: 100000000 * 100,
     ltc: 10000 * 1000, // 10k sat/b
-    rdd: 100000000 * 100, // mirrors doge — high-supply chain, generous cap
+    rdd: 10000000, // matches reddcoin's HIGH_TX_FEE_PER_KB (src/wallet/wallet.h:108) = COIN/10 = 0.1 RDD/KB
     sol: 15000 // Lamports per signature
   },
 
@@ -403,7 +406,7 @@ export const Defaults = {
     xrp: 1 * 1e6, // 1 xrp
     doge: 400 * 1e8,
     ltc: 0.05 * 1e8,
-    rdd: 400 * 1e8 // mirrors doge — high-supply chain, runaway-fee guard
+    rdd: 1 * 1e8 // matches reddcoin's DEFAULT_TRANSACTION_MAXFEE (src/wallet/wallet.h:107) = COIN = 1 RDD per tx
   },
 
   // ETH

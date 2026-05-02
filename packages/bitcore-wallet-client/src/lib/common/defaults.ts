@@ -11,10 +11,11 @@ export const Defaults = {
       case 'doge':
         return 400e8;
       case 'rdd':
-        // Reddcoin denomination is similar to DOGE (high nominal supply,
-        // low per-unit USD value). Cap matches the DOGE order-of-magnitude
-        // so a runaway fee can't accidentally drain a stake-rich wallet.
-        return 400e8;
+        // Matches reddcoin Core's DEFAULT_TRANSACTION_MAXFEE
+        // (src/wallet/wallet.h:107) = COIN = 1 RDD per tx. Reddcoin's
+        // fee structure mirrors Litecoin's, not DOGE's; the high nominal
+        // supply doesn't translate into a high relay-floor.
+        return 1e8;
       default:
         return 1e8;
     }
