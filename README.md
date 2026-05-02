@@ -52,6 +52,13 @@ npm run bws                 # Start bitcore-wallet-service
 npm test:bitcore-lib-redd   # Run REDD lib tests
 ```
 
+For the **whole stack** (reddcoind → bitcore-node → BWS → BWC) including
+config-glue, smoke walkthrough, and a footgun atlas, see [STACK.md](STACK.md).
+Per-package operator and developer guides:
+
+- [`packages/bitcore-wallet-service/OPERATING.md`](packages/bitcore-wallet-service/OPERATING.md)
+- [`packages/bitcore-wallet-client/USAGE.md`](packages/bitcore-wallet-client/USAGE.md)
+
 See [MIGRATION.md](../MIGRATION.md) (in the parent directory) for the
 phase-by-phase plan to keep this fork in sync with upstream.
 
