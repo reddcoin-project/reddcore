@@ -277,7 +277,7 @@ BWS picks UTXOs (via `selectTxInputs` in the chain class), computes an exact fee
 
 A few alternates:
 
-- `sendMax: true` (with `outputs[0].amount` *omitted* — BWS rejects it if you pass both): drains all available funds minus fee. **Caveat**: there's an upstream bug in `Verifier.checkProposalCreation` where `args.outputs[0].amount` is undefined while the server's computed amount isn't — the verifier returns false and `createTxProposal` throws "Server response could not be verified." Workaround: pass an explicit amount close to your balance and let the change output absorb the dust.
+- `sendMax: true` (with `outputs[0].amount` *omitted* — BWS rejects it if you pass both): drains all available funds minus fee. Fixed in [BIT-18](https://reddink.youtrack.cloud/issue/BIT-18) — the upstream verifier was rejecting every sendMax txp because `args.outputs[0].amount` is undefined while `txp.outputs[0].amount` is the server-computed drain value. The patch in `Verifier.checkProposalCreation` skips the amount-equality check on the sendMax leg while keeping every other invariant (toAddress, script, output count, feePerKb, changeAddress, message) strict.
 - `feeLevel: 'priority' | 'normal' | 'economy' | 'superEconomy'`: lets BWS look up an estimated rate from `feeStats`. **Caveat**: on chains with empty fee history (RDD before significant traffic), this hits the `samplePoints` crash documented as BIT-13. Pass `feePerKb` explicitly to avoid that path.
 - `excludeUnconfirmedUtxos: true`: only spend confirmed inputs. Default is to allow any.
 
@@ -340,7 +340,7 @@ Common causes of mid-flow failures and what they mean:
 
 - `Failed state: fee-too-high at <getBitcoreTx()>` from `createTxProposal` → BWS's `MAX_TX_FEE` cap for the chain is `undefined`. Should not happen on a current build; for new chains, see `bws/OPERATING.md` "Common errors".
 - `BADREQUEST: Amount is not allowed when sendMax is specified` → you passed both `amount` and `sendMax: true` in a single output. Drop the `amount`.
-- `Server response could not be verified` from `createTxProposal` → the upstream verifier sendMax bug above.
+- `Server response could not be verified` from `createTxProposal` → was the BIT-18 sendMax verifier bug; should no longer fire on current builds. If you see it on a non-sendMax flow, suspect a genuinely tampered server response: check the txp `outputs`, `feePerKb`, `changeAddress`, and `message` against what you sent.
 - `Not authorized` on any post-create call → your client's `requestPrivKey` doesn't match what BWS recorded. You're using fresh credentials for an existing wallet; either `client.fromString(<persisted-creds>)` or `serverAssistedImport`.
 
 ---

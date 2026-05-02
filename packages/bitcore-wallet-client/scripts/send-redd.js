@@ -13,7 +13,8 @@
  *   # send 1 RDD (1e8 sats) to RuFHSqUod8...
  *   node scripts/send-redd.js RuFHSqUod8y64LrTufB6eXwZqZZsbeAAMG 100000000
  *
- *   # send-max via env var
+ *   # send-max via env var (BIT-18 fix required — verifier patch
+ *   # in src/lib/verifier.ts; the amount arg is ignored in this mode)
  *   SEND_MAX=1 node scripts/send-redd.js RuFHSqUod8y64LrTufB6eXwZqZZsbeAAMG 0
  *
  * Set FEE_PER_KB to override the auto fee level. Set DRY_RUN=1 to

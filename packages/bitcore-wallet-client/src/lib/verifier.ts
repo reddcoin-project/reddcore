@@ -134,7 +134,14 @@ export class Verifier {
       const o2 = args.outputs[i];
       if (!strEqual(o1.toAddress, o2.toAddress)) return false;
       if (!strEqual(o1.script, o2.script)) return false;
-      if (o1.amount != o2.amount) return false;
+      // BIT-18: BWS rejects createTxProposal with `Amount is not allowed
+      // when sendMax is specified`, so on the sendMax path o2.amount is
+      // always undefined while o1.amount is the server-computed drain
+      // amount. The legacy strict-equality check spuriously fails the
+      // verifier for every sendMax txp. Trust the server's amount here;
+      // the other invariants (toAddress, script, output count, feePerKb,
+      // changeAddress, message) still apply.
+      if (!args.sendMax && o1.amount != o2.amount) return false;
       let decryptedMessage: boolean | string = false;
       try {
         decryptedMessage = Utils.decryptMessage(o2.message, encryptingKey);
