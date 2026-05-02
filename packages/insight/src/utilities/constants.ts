@@ -2,8 +2,14 @@ export const SUPPORTED_CURRENCIES = ['BTC', 'BCH', 'ETH', 'DOGE', 'LTC', 'RDD'];
 export const API_ROOT = process.env.REACT_APP_API_ROOT || 'https://api.bitcore.io/api';
 export const API_ROOT_ETH = process.env.REACT_APP_API_ROOT_ETH || 'https://api-eth.bitcore.io/api';
 export const API_ROOT_RDD = process.env.REACT_APP_API_ROOT_RDD || 'http://localhost:3000/api';
-export const ETH_DEFAULT_REFRESH_INTERVAL = 300000;
-export const UTXO_DEFAULT_REFRESH_INTERVAL = 600000;
+// Home-tile poll cadence. UTXO chains were 600_000 (10 min) and ETH was
+// 300_000 (5 min); both felt broken on a single-chain explorer where
+// users sit on the page waiting for the next block. BIT-6 Phase A drops
+// these to a minute. Phase B will switch the blocks page itself to a
+// socket.io subscription, at which point the home tile is the only
+// place left polling and these intervals can be revisited again.
+export const ETH_DEFAULT_REFRESH_INTERVAL = 60_000;
+export const UTXO_DEFAULT_REFRESH_INTERVAL = 60_000;
 export const COIN = 100000000;
 export const DEFAULT_RBF_SEQ_NUMBER = 0xffffffff;
 
