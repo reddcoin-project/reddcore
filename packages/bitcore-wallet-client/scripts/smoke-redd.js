@@ -19,18 +19,35 @@
  * territory. This script just exercises the create/read paths.
  */
 
+const fs = require('fs');
+const path = require('path');
 const { API, Key } = require('../ts_build/src');
 
 const BWS = process.env.BWS_URL || 'http://localhost:3232/bws/api';
 const CHAIN = 'rdd';
 const NETWORK = 'livenet';
+const STATE_DIR = path.join(__dirname, '..', '.smoke-state');
+const KEY_PATH = path.join(STATE_DIR, `redd-${NETWORK}.key.json`);
+const CREDS_PATH = path.join(STATE_DIR, `redd-${NETWORK}.creds.json`);
 
 (async () => {
-  // 1. Generate a fresh key from a new random mnemonic.
-  const key = new Key({ seedType: 'new' });
-  const mnemonic = key.get(null, /* includeMnemonic */ true).mnemonic;
-  console.log('Generated mnemonic (KEEP for replay tests):');
-  console.log('  ', mnemonic);
+  fs.mkdirSync(STATE_DIR, { recursive: true });
+
+  // 1. Generate (or reuse) a key. Persisting both the mnemonic and the
+  //    full creation-time Credentials means balance-redd.js can re-attach
+  //    without re-running serverAssistedImport.
+  let key;
+  if (fs.existsSync(KEY_PATH)) {
+    const stored = JSON.parse(fs.readFileSync(KEY_PATH, 'utf8'));
+    key = new Key({ seedType: 'mnemonic', seedData: stored.mnemonic });
+    console.log('Reusing persisted mnemonic from', KEY_PATH);
+  } else {
+    key = new Key({ seedType: 'new' });
+    const mnemonic = key.get(null, /* includeMnemonic */ true).mnemonic;
+    fs.writeFileSync(KEY_PATH, JSON.stringify({ mnemonic }, null, 2), { mode: 0o600 });
+    console.log('Generated mnemonic; persisted to', KEY_PATH);
+    console.log('  mnemonic:', mnemonic);
+  }
 
   // 2. Build credentials for a 1-of-1 RDD livenet wallet.
   const creds = key.createCredentials(null, {
@@ -50,16 +67,26 @@ const NETWORK = 'livenet';
   });
   client.fromString(JSON.stringify(creds));
 
-  // 4. Create the wallet on BWS.
-  console.log(`Creating wallet on ${BWS} …`);
-  const secret = await client.createWallet('redd-smoke', 'me', 1, 1, {
-    chain: CHAIN,
-    coin: CHAIN,
-    network: NETWORK,
-    singleAddress: false,
-    useNativeSegwit: false
-  });
-  console.log('Created. Secret:', secret);
+  // 4. Create the wallet on BWS (or skip if creds.json says we already did).
+  if (!fs.existsSync(CREDS_PATH)) {
+    console.log(`Creating wallet on ${BWS} …`);
+    await client.createWallet('redd-smoke', 'me', 1, 1, {
+      chain: CHAIN,
+      coin: CHAIN,
+      network: NETWORK,
+      singleAddress: false,
+      useNativeSegwit: false
+    });
+    // Persist the full credential JSON — this is what we need to re-open
+    // the wallet later via `client.fromString(creds)` without going
+    // through serverAssistedImport. Includes walletId, walletPrivKey,
+    // requestPrivKey — treat as sensitive (mode 0600).
+    fs.writeFileSync(CREDS_PATH, client.toString(), { mode: 0o600 });
+    console.log('Persisted credentials to', CREDS_PATH);
+  } else {
+    console.log('Reusing persisted credentials from', CREDS_PATH);
+    client.fromString(fs.readFileSync(CREDS_PATH, 'utf8'));
+  }
 
   // 5. Read back the wallet status.
   const status = await client.getStatus({});

@@ -50,3 +50,6 @@ Session.vim
 .netrwhist
 *~
 ts_build
+
+# Local-only smoke-test state (sensitive: contains mnemonic + walletPrivKey)
+.smoke-state/

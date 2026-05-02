@@ -3637,10 +3637,12 @@ export class API extends EventEmitter {
           { coin: 'sol', chain: 'sol', network: 'livenet' },
           { coin: 'doge', chain: 'doge', network: 'livenet' },
           { coin: 'ltc', chain: 'ltc', network: 'livenet' },
+          { coin: 'rdd', chain: 'rdd', network: 'livenet' },
           { coin: 'btc', chain: 'btc', network: 'livenet', multisig: true },
           { coin: 'bch', chain: 'bch', network: 'livenet', multisig: true },
           { coin: 'doge', chain: 'doge', network: 'livenet', multisig: true },
-          { coin: 'ltc', chain: 'ltc', network: 'livenet', multisig: true }
+          { coin: 'ltc', chain: 'ltc', network: 'livenet', multisig: true },
+          { coin: 'rdd', chain: 'rdd', network: 'livenet', multisig: true }
         ];
 
         if (k.use44forMultisig) {
