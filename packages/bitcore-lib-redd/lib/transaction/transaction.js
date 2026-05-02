@@ -71,8 +71,16 @@ Transaction.DUST_AMOUNT = 546;
 // Margin of error to allow fees in the vecinity of the expected value but doesn't allow a big difference
 Transaction.FEE_SECURITY_MARGIN = 150;
 
-// max amount of satoshis in circulation
-Transaction.MAX_MONEY = 21000000 * 1e8;
+// Max amount of satoshis a CAmount can represent. Mirrors reddcoin
+// Core's MAX_MONEY (src/amount.h:36) = 92233720368 * COIN, which is
+// the largest non-negative 64-bit value the daemon's CAmount type
+// can hold. Reddcoin doesn't have Bitcoin's 21M supply cap; the
+// chain's circulating supply is ~30B RDD, far above what BTC's
+// 2.1e15 sats would allow as a single output or total. Stored as a
+// string because the value (9.22e18) exceeds Number.MAX_SAFE_INTEGER
+// (~9e15) — a numeric literal would silently lose precision. BN.js
+// constructors accept strings.
+Transaction.MAX_MONEY = '9223372036800000000';
 
 // nlocktime limit to be considered block height rather than a timestamp
 Transaction.NLOCKTIME_BLOCKHEIGHT_LIMIT = 5e8;
