@@ -1,7 +1,7 @@
 export const SUPPORTED_CURRENCIES = ['BTC', 'BCH', 'ETH', 'DOGE', 'LTC', 'RDD'];
 export const API_ROOT = process.env.REACT_APP_API_ROOT || 'https://api.bitcore.io/api';
 export const API_ROOT_ETH = process.env.REACT_APP_API_ROOT_ETH || 'https://api-eth.bitcore.io/api';
-export const API_ROOT_RDD = process.env.REACT_APP_API_ROOT_RDD || 'http://localhost:3000/api';
+export const API_ROOT_RDD = process.env.REACT_APP_API_ROOT_RDD || 'http://localhost:3010/api';
 // Home-tile poll cadence. UTXO chains were 600_000 (10 min) and ETH was
 // 300_000 (5 min); both felt broken on a single-chain explorer where
 // users sit on the page waiting for the next block. BIT-6 Phase A drops

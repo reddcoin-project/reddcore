@@ -6,16 +6,17 @@ import {useAppDispatch} from 'src/utilities/hooks';
 import {changeCurrency, changeNetwork} from 'src/store/app.actions';
 import {getApiRoot, normalizeParams} from 'src/utilities/helper-methods';
 import {useApi} from 'src/api/api';
+import {useBlockEvents} from 'src/api/socket';
 import nProgress from 'nprogress';
 import Info from 'src/components/info';
 import {useBlocks} from 'src/contexts';
 import {BitcoinBlockType} from 'src/utilities/models';
 
-// BIT-6 Phase A: poll every 30s so a new block appears at the top of
-// the list within ~30s of bitcore-node serving it. Phase B (socket.io
-// subscription on bitcore-node's `block/<chain>/<network>` channel)
-// is the architecturally-correct follow-up.
-const BLOCKS_REFRESH_INTERVAL_MS = 30_000;
+// BIT-6 Phase B: socket.io subscription drives near-instant updates;
+// SWR polling is now a 5-minute safety net for missed events / a
+// dropped socket. Don't drop polling entirely — a long-running tab
+// whose socket reconnect logic has given up shouldn't go silent.
+const BLOCKS_REFRESH_INTERVAL_MS = 5 * 60_000;
 
 const Blocks: React.FC = () => {
   let {currency, network} = useParams<{currency: string; network: string}>();
@@ -39,10 +40,17 @@ const Blocks: React.FC = () => {
     ? `${getApiRoot(currency)}/${currency}/${network}/block?limit=200`
     : null;
 
-  const {data, error} = useApi(url, {refreshInterval: BLOCKS_REFRESH_INTERVAL_MS});
+  const {data, error, mutate} = useApi(url, {refreshInterval: BLOCKS_REFRESH_INTERVAL_MS});
   // SWR 1.x doesn't expose `isLoading` — derive it the same way SWR
   // does internally: no data and no error means a request is in flight.
   const isLoading = !!url && !data && !error;
+
+  // Live update via bitcore-node's socket.io `block` event. We don't
+  // hand the raw payload up — it's the indexer-level IBlock without
+  // feeData/posData — instead we nudge SWR to refetch the same /block
+  // endpoint, so the data shape stays consistent with the rest of the
+  // page and the merge logic in the next effect dedupes additions.
+  useBlockEvents(currency, network, mutate);
 
   // Reset the context when the chain or network changes so blocks from
   // the previous chain don't bleed into the new view between fetches.

@@ -61,7 +61,14 @@ export class SocketService {
       this.stopped = false;
       logger.info('Starting Socket Service');
       this.httpServer = server;
-      this.io = new SocketIO.Server(server);
+      // Mirror the REST routes' permissive CORS (`app.use(cors())` in
+      // routes/index.ts). Socket.IO v4 denies all cross-origin requests
+      // by default, which breaks insight (served from a different host
+      // in prod and from a different port in dev) connecting to the
+      // public-readable inv room. The room handlers further down already
+      // gate the auth-sensitive rooms (`wallet`, `wallets`) on
+      // signature verification — CORS itself is not the auth boundary.
+      this.io = new SocketIO.Server(server, { cors: { origin: true, credentials: true } });
       this.io.sockets.on('connection', socket => {
         socket.on('room', (room: string, payload: VerificationPayload) => {
           const chainNetwork = room.slice(0, room.lastIndexOf('/') + 1);
