@@ -263,4 +263,25 @@ describe('Peer', function() {
     });
   });
 
+  it('subversion override respected', function() {
+    var custom = '/Reddcore-Test:1.2.3/';
+    var peer = new Peer({host: 'localhost', subversion: custom});
+    peer.subversionOverride.should.equal(custom);
+    var peerSendMessageStub = sinon.stub(Peer.prototype, 'sendMessage', function(message) {
+      message.subversion.should.equal(custom);
+    });
+    peer._sendVersion();
+    peerSendMessageStub.restore();
+  });
+
+  it('subversion default used when override not provided', function() {
+    var peer = new Peer({host: 'localhost'});
+    (peer.subversionOverride === null).should.equal(true);
+    var peerSendMessageStub = sinon.stub(Peer.prototype, 'sendMessage', function(message) {
+      message.subversion.should.match(/^\/Reddcore:.+\/$/);
+    });
+    peer._sendVersion();
+    peerSendMessageStub.restore();
+  });
+
 });

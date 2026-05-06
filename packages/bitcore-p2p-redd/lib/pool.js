@@ -36,6 +36,7 @@ function now() {
  * @param {Boolean=} options.dnsSeed - Prevent seeding with DNS discovered known peers
  * @param {Boolean=} options.relay - Prevent inventory announcements until a filter is loaded
  * @param {Number=} options.maxSize - The max number of peers
+ * @param {String=} options.subversion - Override the user-agent ("subversion") string advertised by every peer the pool creates. Defaults to `/Reddcore:<pkg-version>/`.
  * @returns {Pool}
  * @constructor
  */
@@ -61,6 +62,7 @@ function Pool(options) {
   this.messages = options.messages;
   this.network = options.network || Networks.defaultNetwork;
   this.relay = options.relay === false ? false : true;
+  this.subversion = options.subversion || null;
 
   if (options.addrs) {
     for(var i = 0; i < options.addrs.length; i++) {
@@ -199,7 +201,8 @@ Pool.prototype._connectPeer = function _connectPeer(addr) {
       port: port,
       messages: self.messages,
       network: this.network,
-      relay: self.relay
+      relay: self.relay,
+      subversion: self.subversion
     });
 
     peer.on('connect', function peerConnect() {
@@ -227,7 +230,8 @@ Pool.prototype._addConnectedPeer = function _addConnectedPeer(socket, addr) {
     var peer = new Peer({
       socket: socket,
       network: this.network,
-      messages: self.messages
+      messages: self.messages,
+      subversion: self.subversion
     });
 
     self._addPeerEventHandlers(peer, addr);

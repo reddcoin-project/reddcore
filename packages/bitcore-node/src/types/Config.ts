@@ -30,6 +30,7 @@ export interface IUtxoNetworkConfig extends INetworkConfig {
   syncStartHash?: string; // Start syncing from this block
   prefetchSize?: number; // Number of blocks to prefetch during single-thread sync. Default: 10. Set to 0 to disable prefetching.
   threads?: number; // Number of worker threads for initial sync. Defaults to CPU cores - 1. Set to 0 to disable multi-threaded sync.
+  subversion?: string; // Override the user-agent ("subversion") string advertised to remote peers. Only honored by P2P packages that thread the option through (e.g. @reddcoinproject/bitcore-p2p-redd).
 }
 
 export type ProviderDataType = 'realtime' | 'historical';

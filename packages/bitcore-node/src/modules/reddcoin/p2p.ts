@@ -29,7 +29,8 @@ export class ReddcoinP2PWorker extends LitecoinP2PWorker {
       dnsSeed: false,
       listenAddr: false,
       network: this.network,
-      messages: this.messages
+      messages: this.messages,
+      subversion: this.chainConfig.subversion
     });
   }
 }

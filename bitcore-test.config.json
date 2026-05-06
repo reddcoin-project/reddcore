@@ -20,6 +20,7 @@
     "chains": {
       "BTC": {
         "regtest": {
+          "disabled": true,
           "chainSource": "p2p",
           "trustedPeers": [
             {
@@ -37,6 +38,7 @@
       },
       "BCH": {
         "regtest": {
+          "disabled": true,
           "chainSource": "p2p",
           "trustedPeers": [
             {
@@ -67,11 +69,13 @@
             "port": 45443,
             "username": "bitcorenodetest",
             "password": "local321"
-          }
+          },
+          "subversion": "/Reddcore-Test:11.8.1/"
         }
       },
       "ETH": {
         "regtest": {
+          "disabled": true,
           "chainSource": "p2p",
           "trustedPeers": [
             {
@@ -89,6 +93,7 @@
           "threads": 0
         },
         "sepolia": {
+          "disabled": true,
           "chainSource": "external",
           "trustedPeers": [],
           "providers": [
@@ -104,6 +109,7 @@
       },
       "MATIC": {
         "regtest": {
+          "disabled": true,
           "chainSource": "p2p",
           "trustedPeers": [
             {
@@ -123,6 +129,7 @@
       },
       "BASE": {
         "sepolia": {
+          "disabled": true,
           "chainSource": "external",
           "module": "./moralis",
           "needsL1Fee": true,
@@ -150,6 +157,7 @@
       },
       "XRP": {
         "testnet": {
+          "disabled": true,
           "chainSource": "rpc",
           "provider": {
             "host": "localhost",
@@ -158,9 +166,10 @@
             "dataHost": "localhost"
           }
         }
-      }, 
+      },
       "SOL": {
         "regtest": {
+          "disabled": true,
           "chainSource": "external",
           "provider": {
             "host": "127.0.0.1",
@@ -171,6 +180,7 @@
           }
         },
         "devnet": {
+          "disabled": true,
           "chainSource": "external",
           "provider": {
             "host": "api.devnet.solana.com",

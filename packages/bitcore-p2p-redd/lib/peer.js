@@ -34,6 +34,7 @@ const $ = bitcore.util.preconditions;
  * @param {Network} options.network - The network configuration
  * @param {Boolean=} options.relay - An option to disable automatic inventory relaying from the remote peer
  * @param {Socket=} options.socket - An existing connected socket
+ * @param {String=} options.subversion - Override the user-agent ("subversion") string advertised in the outgoing version message. Defaults to `/Reddcore:<pkg-version>/`.
 
  * @returns {Peer} A new instance of Peer.
  * @constructor
@@ -78,6 +79,7 @@ function Peer(options) {
   this.version = 0;
   this.bestHeight = 0;
   this.subversion = null;
+  this.subversionOverride = options.subversion || null;
   this.relay = options.relay === false ? false : true;
 
   this.versionSent = false;
@@ -208,7 +210,10 @@ Peer.prototype.sendMessage = function(message) {
  */
 Peer.prototype._sendVersion = function() {
   // todo: include sending local ip address
-  var message = this.messages.Version({relay: this.relay});
+  var message = this.messages.Version({
+    relay: this.relay,
+    subversion: this.subversionOverride
+  });
   this.versionSent = true;
   this.sendMessage(message);
 };
