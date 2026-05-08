@@ -33,7 +33,7 @@
     "compile": "npm run clean && npm run build",
     "build": "tsc",
     "build:prod": "tsc -p tsconfig.prod.json",
-    "build:docker": "docker build -t reddcoinproject/bitcore-node:latest -f ./Dockerfile ../..",
+    "build:docker": "docker build -t reddcoincore/bitcore-node:latest -f ./Dockerfile ../..",
     "docs:build-html": "typedoc --out ./docs/html --tsconfig tsconfig.json ./src",
     "docs:build-json": "typedoc --json ./docs/json --tsconfig tsconfig.json ./src",
     "tsc": "npm run clean && tsc",

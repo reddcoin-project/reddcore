@@ -3,7 +3,13 @@
   "compilerOptions": {
     "rootDir": "."
   },
+  "include": [
+    "./src/**/*.ts"
+  ],
   "exclude": [
-    "test"
+    "node_modules",
+    "test",
+    "tests",
+    "scripts"
   ]
 }

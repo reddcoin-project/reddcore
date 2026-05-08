@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "build:prod": "tsc",
     "clean": "rm -rf ts_build && tsc --version",
     "compile": "npm run clean && npm run build",
     "precommit": "npm run lint",

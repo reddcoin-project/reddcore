@@ -61,6 +61,7 @@
     "docs": "TODO ./node_modules/.bin/tsdoc src/lib/* src/lib/common src/lib/errors -o docs && cat README.header.md  docs/*.md LICENSE > README.md",
     "compile": "npm run clean && tsc",
     "build": "tsc && npm run lint",
+    "build:prod": "tsc -p tsconfig.prod.json",
     "clean": "rm -rf ./ts_build",
     "lint": "eslint .",
     "fix:errors": "eslint --fix --quiet .",
