@@ -22,9 +22,6 @@ This repository ships first-class [Reddcoin (REDD)](https://www.reddcoin.com) su
 ## Upstream packages (kept as-is, not republished)
 
 ### Applications
-- [Bitcore Node](packages/bitcore-node) - Standardized API across multiple blockchain networks
-- [Bitcore Wallet Client](packages/bitcore-wallet-client) - Client for Bitcore Wallet Service
-- [Bitcore Wallet Service](packages/bitcore-wallet-service) - Coordination service for multisig wallets
 - [Bitcore CLI](packages/bitcore-cli) - Command-line interface for BWS and BWC
 - [Insight](packages/insight) - Block explorer web UI (with Reddcoin support)
 

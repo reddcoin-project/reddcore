@@ -1,5 +1,5 @@
 {
-  "name": "@bitpay-labs/bitcore-node",
+  "name": "@reddcoinproject/bitcore-node",
   "description": "A blockchain indexing node with extended capabilities using bitcore",
   "engines": {
     "node": ">=22.0.0"
@@ -13,9 +13,17 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/bitpay/bitcore/tree/master/packages/bitcore-node"
+    "url": "https://github.com/reddcoin-project/reddcore/tree/master/packages/bitcore-node"
   },
   "main": "build/src/server.js",
+  "files": [
+    "bin/",
+    "build/src/",
+    "build/test/verification/",
+    "docs/",
+    "bitcore-node.service",
+    "repair-sample.json"
+  ],
   "bin": "bin/start",
   "scripts": {
     "start": "npm run tsc && node build/src/server.js",
@@ -25,7 +33,7 @@
     "compile": "npm run clean && npm run build",
     "build": "tsc",
     "build:prod": "tsc -p tsconfig.prod.json",
-    "build:docker": "docker build -t bitpay/bitcore-node:latest -f ./Dockerfile ../..",
+    "build:docker": "docker build -t reddcoinproject/bitcore-node:latest -f ./Dockerfile ../..",
     "docs:build-html": "typedoc --out ./docs/html --tsconfig tsconfig.json ./src",
     "docs:build-json": "typedoc --json ./docs/json --tsconfig tsconfig.json ./src",
     "tsc": "npm run clean && tsc",
