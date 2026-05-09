@@ -5,13 +5,14 @@ Spin up MongoDB + `reddcoincore/bitcore-node` + `reddcoincore/bitcore-wallet-ser
 ## Quick start
 
 ```bash
-# 1. Edit configs (RPC creds, BWS socketApiKey)
-cp .env.example .env                                             # optional — only if you want non-default ports
-$EDITOR config/bitcore.config.json                                # set RPC username/password
-$EDITOR config/bws.config.js                                      # set socketApiKey (see comment in file)
+# 1. Copy the example configs (they're gitignored once you uncomment
+#    them so your edits don't get committed) and edit them:
+cp config/bitcore.config.example.json config/bitcore.config.json   # set RPC username/password inside
+cp config/bws.config.example.js       config/bws.config.js         # set socketApiKey (see comment in file)
+cp .env.example .env                                                # optional — only if you want non-default ports
 
 # 2. Bring up the stack
-docker compose -f docker-compose.yml --env-file .env up -d       # if you copied .env
+docker compose -f docker-compose.yml --env-file .env up -d         # if you copied .env
 # OR (defaults are fine for most local-dev cases)
 docker compose -f docker-compose.yml up -d
 

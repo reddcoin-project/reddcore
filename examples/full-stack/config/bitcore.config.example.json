@@ -1,0 +1,30 @@
+{
+  "_comment": "Reddcoin-only bitcore-node config for the docker-compose example. reddcoind is reached via host.docker.internal (the host's reddcoind). Mongo connection comes from DB_HOST/DB_NAME env vars set in docker-compose.yml.",
+  "bitcoreNode": {
+    "services": {
+      "api": {
+        "wallets": {
+          "allowCreationBeforeCompleteSync": true
+        }
+      }
+    },
+    "chains": {
+      "RDD": {
+        "mainnet": {
+          "module": "./reddcoin",
+          "chainSource": "p2p",
+          "trustedPeers": [
+            { "host": "host.docker.internal", "port": 45444 }
+          ],
+          "rpc": {
+            "host": "host.docker.internal",
+            "port": 45443,
+            "username": "REPLACE_ME_RPC_USER",
+            "password": "REPLACE_ME_RPC_PASSWORD"
+          },
+          "subversion": "/Reddcore-Stack:11.8.1/"
+        }
+      }
+    }
+  }
+}

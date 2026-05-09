@@ -1,6 +1,14 @@
 # Full Reddcoin stack: mongo + bitcore-node + bitcore-wallet-service
 #
-# Spin up:   docker compose -f examples/full-stack/docker-compose.yml --env-file examples/full-stack/.env up -d
+# Before first run, copy the example configs (they're gitignored once
+# uncommented so your edits don't get committed):
+#   cp examples/full-stack/config/bitcore.config.example.json \
+#      examples/full-stack/config/bitcore.config.json
+#   cp examples/full-stack/config/bws.config.example.js \
+#      examples/full-stack/config/bws.config.js
+#   $EDITOR examples/full-stack/config/{bitcore.config.json,bws.config.js}
+#
+# Spin up:   docker compose -f examples/full-stack/docker-compose.yml up -d
 # Tear down: docker compose -f examples/full-stack/docker-compose.yml down
 # Logs:      docker compose -f examples/full-stack/docker-compose.yml logs -f bitcore-node
 #

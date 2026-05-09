@@ -28,3 +28,7 @@ bitcore-p2p*.min.js
 
 # npm pack output (smoke-test artefacts)
 *.tgz
+
+# examples/full-stack: ignore operator-edited copies of the .example configs
+examples/full-stack/config/*
+!examples/full-stack/config/*.example.*
