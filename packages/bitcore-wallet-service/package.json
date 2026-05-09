@@ -29,7 +29,7 @@
     "test:ci": "BWS_LOG_LEVEL=none npm run test",
     "build": "tsc && npm run cp:templates",
     "build:prod": "tsc -p tsconfig.prod.json && npm run cp:templates",
-    "build:docker": "docker build -t bitpay/bitcore-wallet-service:latest -f ./Dockerfile ../..",
+    "build:docker": "docker build -t reddcoincore/bitcore-wallet-service:latest -f ./Dockerfile ../..",
     "clean": "rm -rf ./ts_build",
     "compile": "npm run clean && npm run build",
     "pub": "npm run build && npm publish",
