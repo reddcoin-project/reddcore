@@ -69,4 +69,20 @@ COPY --from=builder /bitcore/node_modules ./node_modules
 COPY --from=builder /bitcore/packages ./packages
 
 WORKDIR /bitcore/packages/bitcore-wallet-service
+
+# Default config dir — matches BWS's source-code default
+# (src/config.ts: __dirname/../../). BWS_CONFIG_PATH can be a directory
+# containing bws.config.js OR a path to the .js file directly.
+# Override via `-e BWS_CONFIG_PATH=/path/to/dir-or-file` at run time.
+ENV BWS_CONFIG_PATH=/bitcore/packages/bitcore-wallet-service
+
+# Liveness check — hits the bws.js /v1/version endpoint inside the
+# basePath set by the mounted bws.config.js (default '/bws/api').
+# node:22-slim has no curl/wget; use node itself. The 6 background
+# workers (messagebroker, bcmonitor, …) come up faster than bws.js
+# binds the API socket, so checking bws.js's endpoint covers the
+# end-to-end "API is up" signal in one probe.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD ["node", "-e", "require('http').get('http://localhost:3232/bws/api/v1/version/', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+
 CMD ["./start-docker.sh"]

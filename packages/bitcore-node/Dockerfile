@@ -71,4 +71,20 @@ COPY --from=builder /bitcore/node_modules ./node_modules
 COPY --from=builder /bitcore/packages ./packages
 
 WORKDIR /bitcore/packages/bitcore-node
+
+# Default config path — matches bitcore-node's source-code default
+# (src/config.ts: __dirname/../../../../bitcore.config.json from
+# build/src/config.js → /bitcore/bitcore.config.json). Set explicitly
+# so operators reading the Dockerfile see the contract; override via
+# `-e BITCORE_CONFIG_PATH=/path/to/config.json` at run time.
+ENV BITCORE_CONFIG_PATH=/bitcore/bitcore.config.json
+
+# Liveness check — hits the in-memory /api/status/enabled-chains route
+# which doesn't require Mongo or P2P connectivity, just that the API
+# server is bound. node:22-slim has no curl/wget, so use node itself.
+# --start-period=60s gives Mongo connect + P2P handshake time to settle
+# before failures count against the unhealthy threshold.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD ["node", "-e", "require('http').get('http://localhost:3000/api/status/enabled-chains', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+
 CMD ["node", "./build/src/server.js"]
