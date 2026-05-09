@@ -6,6 +6,56 @@
 
 **A Multisig HD Bitcore Wallet Service.**
 
+## Run with Docker
+
+The published Reddcoin-flavored image lives at `reddcoincore/bitcore-wallet-service` on Docker Hub.
+
+```bash
+docker pull reddcoincore/bitcore-wallet-service:latest
+```
+
+### Quick local run
+
+The image's entrypoint is `start-docker.sh`, which spawns six background workers — `messagebroker`, `bcmonitor`, `emailservice`, `pushnotificationsservice`, `fiatrateservice`, and `bws.js` itself — and tails their logs to stdout.
+
+```bash
+docker run --rm -it --network host \
+  -v /path/to/bws.config.js:/bitcore/packages/bitcore-wallet-service/bws.config.js:ro \
+  reddcoincore/bitcore-wallet-service:latest
+```
+
+The API binds **port 3232** at the basePath set in your `bws.config.js` (default `/bws/api`). The image reads its config from `BWS_CONFIG_PATH` (default `/bitcore/packages/bitcore-wallet-service`, where it looks for `bws.config.js`).
+
+### Bridge networking
+
+```bash
+docker run --rm -it \
+  --add-host=host.docker.internal:host-gateway \
+  -p 3232:3232 \
+  -v /path/to/bws.config.js:/bitcore/packages/bitcore-wallet-service/bws.config.js:ro \
+  reddcoincore/bitcore-wallet-service:latest
+```
+
+In this mode `bws.config.js` should reference `host.docker.internal` for the Mongo URI and any host-running `bitcore-node`.
+
+### Configuration
+
+| Env var | Default | Purpose |
+|---|---|---|
+| `BWS_CONFIG_PATH` | `/bitcore/packages/bitcore-wallet-service` | Either a directory containing `bws.config.js` OR a path to the `.js` file directly |
+| `BWS_PORT` | _(from `bws.config.js`)_ | Override the API port without editing the config |
+| `BWS_LOG_LEVEL` | _(unset)_ | Set to `none` to silence noisy startup logs |
+
+The full config schema is in [`bws.example.config.js`](bws.example.config.js) — copy and edit, mount your copy. Operator-facing deep dive in [OPERATING.md](OPERATING.md).
+
+### Healthcheck
+
+Ships with a Docker `HEALTHCHECK` that probes `/bws/api/v1/version/`. Visible via `docker inspect --format '{{.State.Health.Status}}' <container>`. Intervals: 30s probe, 30s start-period grace (BWS comes up faster than the indexer because it has no chain-state ingest).
+
+### Full stack (mongo + indexer + BWS) in one command
+
+For end-to-end local-dev, see [`examples/full-stack/`](../../examples/full-stack/) — wires mongo + bitcore-node + bitcore-wallet-service with healthcheck-gated startup. BWS waits for the indexer's healthcheck to flip green before it starts, so `bcmonitor` doesn't crash on `connect ECONNREFUSED` during cold boots.
+
 ## Description
 
 Bitcore Wallet Service facilitates multisig HD wallets creation and operation through a (hopefully) simple and intuitive REST API.

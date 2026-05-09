@@ -49,6 +49,23 @@ npm run bws                 # Start bitcore-wallet-service
 npm test:bitcore-lib-redd   # Run REDD lib tests
 ```
 
+### Run with Docker
+
+The published images live under [`reddcoincore` on Docker Hub](https://hub.docker.com/u/reddcoincore):
+
+```bash
+docker pull reddcoincore/bitcore-node:latest
+docker pull reddcoincore/bitcore-wallet-service:latest
+```
+
+For a full stack (mongo + indexer + BWS) in one command, see
+[`examples/full-stack/`](examples/full-stack/) — a docker-compose example
+with healthcheck-gated startup, sample configs, and a troubleshooting
+runbook. Per-package Docker usage details live in each package's README:
+
+- [`packages/bitcore-node/README.md`](packages/bitcore-node/README.md#run-with-docker)
+- [`packages/bitcore-wallet-service/README.md`](packages/bitcore-wallet-service/README.md#run-with-docker)
+
 For the **whole stack** (reddcoind → bitcore-node → BWS → BWC) including
 config-glue, smoke walkthrough, and a footgun atlas, see [STACK.md](STACK.md).
 Per-package operator and developer guides:

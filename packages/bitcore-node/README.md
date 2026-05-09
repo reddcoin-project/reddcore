@@ -3,8 +3,60 @@
 **A standardized API to interact with multiple blockchain networks**
 
 Currently supporting:
-**[Bitcoin](https://bitcoin.org/), [Bitcoin Cash](https://bitcoincash.org/), [Litecoin](https://litecoin.com/), [Dogecoin](https://dogecoin.com/), [Ripple](https://ripple.com/), [Ethereum](https://ethereum.org/) and [Polygon](https://polygon.technology/)**
+**[Bitcoin](https://bitcoin.org/), [Bitcoin Cash](https://bitcoincash.org/), [Litecoin](https://litecoin.com/), [Dogecoin](https://dogecoin.com/), [Reddcoin](https://www.reddcoin.com/), [Ripple](https://ripple.com/), [Ethereum](https://ethereum.org/) and [Polygon](https://polygon.technology/)**
 
+## Run with Docker
+
+The published Reddcoin-flavored image lives at `reddcoincore/bitcore-node` on Docker Hub.
+
+```bash
+docker pull reddcoincore/bitcore-node:latest
+```
+
+### Quick local run
+
+The friction-free path on Linux: `--network host` so the container can reach a Mongo and `reddcoind` running on the host without port-mapping gymnastics.
+
+```bash
+docker run --rm -it --network host \
+  -v /path/to/bitcore.config.json:/bitcore/bitcore.config.json:ro \
+  reddcoincore/bitcore-node:latest
+```
+
+The image binds the API on **port 3000**, expects MongoDB at `127.0.0.1:27017` (override via `DB_HOST` / `DB_NAME` env vars), and reads its config from `/bitcore/bitcore.config.json` (override via `BITCORE_CONFIG_PATH`).
+
+### Bridge networking (Docker Desktop, hardened hosts)
+
+```bash
+docker run --rm -it \
+  --add-host=host.docker.internal:host-gateway \
+  -p 3000:3000 \
+  -e DB_HOST=host.docker.internal \
+  -v /path/to/bitcore.config.json:/bitcore/bitcore.config.json:ro \
+  reddcoincore/bitcore-node:latest
+```
+
+In this mode your `bitcore.config.json` should reference `host.docker.internal` (not `localhost`) for any host-running peers / RPC targets.
+
+### Configuration
+
+| Env var | Default | Purpose |
+|---|---|---|
+| `BITCORE_CONFIG_PATH` | `/bitcore/bitcore.config.json` | Where the indexer reads its config from |
+| `DB_HOST` | `127.0.0.1` | MongoDB hostname |
+| `DB_NAME` | `bitcore` | MongoDB database name |
+| `DB_PORT` | `27017` | MongoDB port |
+| `DB_USER` / `DB_PASS` | _(empty)_ | MongoDB auth (optional) |
+
+Full config schema lives in [`src/types/Config.ts`](src/types/Config.ts).
+
+### Healthcheck
+
+The image ships with a Docker `HEALTHCHECK` that probes `/api/status/enabled-chains` (no Mongo or P2P dependency — just confirms the API is bound and responding). Visible via `docker inspect --format '{{.State.Health.Status}}' <container>`. Intervals: 30s probe, 60s start-period grace.
+
+### Full stack (mongo + indexer + BWS) in one command
+
+For local-dev or production-shaped deployments, see [`examples/full-stack/`](../../examples/full-stack/) — a docker-compose example that wires mongo + bitcore-node + bitcore-wallet-service together with proper healthcheck-gated startup ordering. README in that directory documents the `reddcoind` host-side configuration prerequisites.
 
 ## Getting Started
 
