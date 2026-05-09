@@ -11,7 +11,6 @@
     "!packages/insight"
   ],
   "scripts": {
-    "build": "docker build -t bitcore-node . ",
     "build:docker": "lerna run build:docker --concurrency 1 --stream",
     "watch": "./node_modules/.bin/lerna run watch --parallel",
     "postinstall": "npm run compile",
