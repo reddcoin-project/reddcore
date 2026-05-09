@@ -9,6 +9,7 @@ import {
   GetBlockParams,
   GetEstimatePriorityFeeParams,
   GetEstimateSmartFeeParams,
+  GetTopAddressesParams,
   GetWalletBalanceAtTimeParams,
   GetWalletBalanceParams,
   GetWalletParams,
@@ -41,6 +42,14 @@ class ChainStateProxy implements IChainStateProvider {
 
   async getBalanceForAddress(params: GetBalanceForAddressParams) {
     return this.get(params).getBalanceForAddress(params);
+  }
+
+  async getTopAddresses(params: GetTopAddressesParams) {
+    const provider = this.get(params);
+    if (!provider.getTopAddresses) {
+      throw new Error(`getTopAddresses is not implemented for chain ${params.chain}`);
+    }
+    return provider.getTopAddresses(params);
   }
 
   async getBlock(params: GetBlockParams) {

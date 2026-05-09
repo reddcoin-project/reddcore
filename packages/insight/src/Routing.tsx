@@ -5,6 +5,7 @@ const Blocks = lazy(() => import('./pages/blocks'));
 const Block = lazy(() => import('./pages/block'));
 const TransactionHash = lazy(() => import('./pages/transaction'));
 const Address = lazy(() => import('./pages/address'));
+const RichList = lazy(() => import('./pages/rich-list'));
 const Search = lazy(() => import('./pages/search'));
 
 function Routing() {
@@ -16,6 +17,7 @@ function Routing() {
         <Route path='/:currency/:network/block/:block' element={<Block />} />
         <Route path='/:currency/:network/tx/:tx' element={<TransactionHash />} />
         <Route path='/:currency/:network/address/:address' element={<Address />} />
+        <Route path='/:currency/:network/rich-list' element={<RichList />} />
         <Route path='/search' element={<Search />} />
         {/* 404 redirect to home page */}
         <Route path='*' element={<Navigate to='/' />} />

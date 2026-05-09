@@ -37,6 +37,19 @@ export type GetBalanceForAddressParams = ChainNetwork & {
   args: any;
 };
 
+export type GetTopAddressesParams = ChainNetwork & {
+  args: {
+    limit?: number;       // default 100, capped server-side
+    offset?: number;      // default 0
+  };
+};
+
+export interface TopAddressEntry {
+  rank: number;
+  address: string;
+  balance: number;        // unspent confirmed balance, in satoshis (or chain-equivalent base unit)
+}
+
 export type GetBlockParams = ChainNetwork & {
   blockId?: string;
   sinceBlock?: number | string;
@@ -186,6 +199,7 @@ export interface IChainStateService {
   getBalanceForAddress(
     params: GetBalanceForAddressParams
   ): Promise<WalletBalanceType>;
+  getTopAddresses?(params: GetTopAddressesParams): Promise<TopAddressEntry[]>;
   getBlock(params: GetBlockParams): Promise<IBlock>;
   getBlockBeforeTime(params: GetBlockBeforeTimeParams): Promise<IBlock | null>;
   streamBlocks(params: StreamBlocksParams): any;

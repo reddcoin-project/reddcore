@@ -30,6 +30,7 @@ import type {
   GetBalanceForAddressParams,
   GetBlockParams,
   GetEstimateSmartFeeParams,
+  GetTopAddressesParams,
   GetWalletBalanceAtTimeParams,
   GetWalletBalanceParams,
   GetWalletParams,
@@ -40,6 +41,7 @@ import type {
   StreamWalletMissingAddressesParams,
   StreamWalletTransactionsParams,
   StreamWalletUtxosParams,
+  TopAddressEntry,
   UpdateWalletParams,
   WalletCheckParams
 } from '../../../types/namespaces/ChainStateProvider';
@@ -98,6 +100,41 @@ export class InternalStateProvider implements IChainStateService {
     };
     const balance = await CoinStorage.getBalance({ query });
     return balance;
+  }
+
+  async getTopAddresses(params: GetTopAddressesParams): Promise<TopAddressEntry[]> {
+    const { chain, network, args } = params;
+    const limit = Math.min(Math.max(Number(args.limit) || 100, 1), 1000);
+    const offset = Math.max(Number(args.offset) || 0, 0);
+
+    // Aggregate unspent (= currently held) outputs grouped by address.
+    // The partial index (address, chain, network) WHERE spentHeight < 0 is the
+    // selective access path; the leading $match keys it.
+    const result = await CoinStorage.collection
+      .aggregate<{ _id: string; balance: number }>(
+        [
+          {
+            $match: {
+              chain,
+              network,
+              spentHeight: { $lt: SpentHeightIndicators.minimum },
+              mintHeight: { $gt: SpentHeightIndicators.conflicting }
+            }
+          },
+          { $group: { _id: '$address', balance: { $sum: '$value' } } },
+          { $sort: { balance: -1 } },
+          { $skip: offset },
+          { $limit: limit }
+        ],
+        { allowDiskUse: true }
+      )
+      .toArray();
+
+    return result.map((r, i) => ({
+      rank: offset + i + 1,
+      address: r._id,
+      balance: r.balance
+    }));
   }
 
   streamBlocks(params: StreamBlocksParams) {
