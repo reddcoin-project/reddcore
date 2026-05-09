@@ -1,0 +1,82 @@
+# Full Reddcoin stack: mongo + bitcore-node + bitcore-wallet-service
+#
+# Spin up:   docker compose -f examples/full-stack/docker-compose.yml --env-file examples/full-stack/.env up -d
+# Tear down: docker compose -f examples/full-stack/docker-compose.yml down
+# Logs:      docker compose -f examples/full-stack/docker-compose.yml logs -f bitcore-node
+#
+# Prereq: reddcoind running on the host with RPC reachable from containers.
+# See README.md in this directory for the reddcoind setup notes.
+#
+# Network model: all services on a private bridge network (`reddstack`).
+# Only the two API ports (3000, 3232) are exposed to the host. Mongo is
+# *not* exposed by default — uncomment its `ports` block for direct access.
+
+name: reddstack
+
+services:
+
+  mongo:
+    image: mongo:6
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    # ports:
+    #   - 27017:27017                 # uncomment for host access
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [reddstack]
+
+  bitcore-node:
+    image: reddcoincore/bitcore-node:latest
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    extra_hosts:
+      # Lets the indexer reach a reddcoind running on the host.
+      # On Linux this resolves to the docker bridge gateway; on
+      # Mac/Windows it's the equivalent loopback shim.
+      - "host.docker.internal:host-gateway"
+    environment:
+      # bitcore-node defaults to mongo on 127.0.0.1; point it at the
+      # in-network service. Could also live in bitcore.config.json
+      # (under the bitcoreNode block as `dbHost`/`dbName`), but env
+      # keeps the example config free of plumbing details.
+      - DB_HOST=mongo
+      - DB_NAME=bitcore
+    ports:
+      - "${BITCORE_NODE_PORT:-3000}:3000"
+    volumes:
+      - ./config/bitcore.config.json:/bitcore/bitcore.config.json:ro
+      # The indexer doesn't write block data to disk (it's in Mongo);
+      # only mount a logs dir if you have something writing to it.
+    # HEALTHCHECK comes baked into the image (BIT-23). Compose picks
+    # it up automatically — no need to redeclare here.
+    networks: [reddstack]
+
+  bitcore-wallet-service:
+    image: reddcoincore/bitcore-wallet-service:latest
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+      bitcore-node:
+        condition: service_healthy        # gated on the indexer's API actually responding (BIT-23)
+    ports:
+      - "${BWS_PORT:-3232}:3232"
+    volumes:
+      - ./config/bws.config.js:/bitcore/packages/bitcore-wallet-service/bws.config.js:ro
+      - bws-logs:/bitcore/packages/bitcore-wallet-service/logs
+    networks: [reddstack]
+
+networks:
+  reddstack:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  bws-logs:
