@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import nProgress from 'nprogress';
 
 import Info from '../components/info';
+import WealthDistribution from '../components/wealth-distribution';
 import {useApi} from 'src/api/api';
 import {useAppDispatch} from 'src/utilities/hooks';
 import {changeCurrency, changeNetwork} from 'src/store/app.actions';
@@ -120,7 +121,9 @@ const RichList: React.FC = () => {
   return (
     <>
       {errorMessage ? <Info type={'error'} message={errorMessage} /> : null}
-      <h2>{chain} {net} — rich list (top {data?.length ?? '...'})</h2>
+      <h2>{chain} {net} — rich list</h2>
+      <WealthDistribution chain={chain} network={net} />
+      <h3>Top {data?.length ?? '...'} addresses</h3>
       <Caption>
         Aggregated from current unspent outputs. Refreshes every five
         minutes. Server returns up to 1000 entries; the page shows the

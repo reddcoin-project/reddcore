@@ -24,10 +24,13 @@ import type { TransactionJSON } from '../../../types/Transaction';
 import type { StreamBlocksParams } from '../../../types/namespaces/ChainStateProvider';
 import type { GetBlockBeforeTimeParams, StreamTransactionParams, WalletBalanceType } from '../../../types/namespaces/ChainStateProvider';
 import type {
+  AddressDistribution,
   BroadcastTransactionParams,
   CreateWalletParams,
   DailyTransactionsParams,
+  DistributionBucket,
   DormantAddressEntry,
+  GetAddressDistributionParams,
   GetBalanceForAddressParams,
   GetBlockParams,
   GetDormantAddressesParams,
@@ -217,6 +220,74 @@ export class InternalStateProvider implements IChainStateService {
       lastActiveHeight: r.lastActiveHeight,
       lastActiveTime: (heightToTime.get(r.lastActiveHeight) || new Date(0)).toISOString()
     }));
+  }
+
+  async getAddressDistribution(params: GetAddressDistributionParams): Promise<AddressDistribution> {
+    const { chain, network } = params;
+
+    // Powers-of-10 boundaries in base units (sats). For an 8-decimal chain
+    // like RDD, 1e8 sats = 1 coin, so this lays out as 0–0.001, 0.001–0.01,
+    // ..., 1–10, ..., 10^9–10^10, plus an unbounded overflow above 10^18.
+    // Mirrors bitinfocharts' "Wealth distribution" buckets.
+    const boundaries = [0, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18];
+
+    const result = await CoinStorage.collection
+      .aggregate<{ _id: number | 'overflow'; addressCount: number; valueSum: number }>(
+        [
+          {
+            $match: {
+              chain,
+              network,
+              spentHeight: { $lt: SpentHeightIndicators.minimum },
+              mintHeight: { $gt: SpentHeightIndicators.conflicting }
+            }
+          },
+          { $group: { _id: '$address', balance: { $sum: '$value' } } },
+          {
+            $bucket: {
+              groupBy: '$balance',
+              boundaries,
+              default: 'overflow',
+              output: {
+                addressCount: { $sum: 1 },
+                valueSum: { $sum: '$balance' }
+              }
+            }
+          }
+        ],
+        { allowDiskUse: true }
+      )
+      .toArray();
+
+    // $bucket omits empty buckets from its output; fill them back in so the
+    // UI gets a stable, dense series (every defined band, in order).
+    const bucketMap = new Map<number | string, { addressCount: number; valueSum: number }>();
+    for (const r of result) {
+      bucketMap.set(r._id, { addressCount: r.addressCount, valueSum: r.valueSum });
+    }
+
+    const buckets: DistributionBucket[] = [];
+    for (let i = 0; i < boundaries.length - 1; i++) {
+      const entry = bucketMap.get(boundaries[i]) || { addressCount: 0, valueSum: 0 };
+      buckets.push({
+        min: boundaries[i],
+        max: boundaries[i + 1],
+        addressCount: entry.addressCount,
+        valueSum: entry.valueSum
+      });
+    }
+    const overflow = bucketMap.get('overflow') || { addressCount: 0, valueSum: 0 };
+    buckets.push({
+      min: boundaries[boundaries.length - 1],
+      max: null,
+      addressCount: overflow.addressCount,
+      valueSum: overflow.valueSum
+    });
+
+    const totalAddresses = buckets.reduce((sum, b) => sum + b.addressCount, 0);
+    const totalSupply = buckets.reduce((sum, b) => sum + b.valueSum, 0);
+
+    return { totalSupply, totalAddresses, buckets };
   }
 
   streamBlocks(params: StreamBlocksParams) {

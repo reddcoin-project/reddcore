@@ -4,6 +4,7 @@ import {
   ChainStateServices,
   CreateWalletParams,
   DailyTransactionsParams,
+  GetAddressDistributionParams,
   GetBalanceForAddressParams,
   GetBlockBeforeTimeParams,
   GetBlockParams,
@@ -59,6 +60,14 @@ class ChainStateProxy implements IChainStateProvider {
       throw new Error(`getDormantAddresses is not implemented for chain ${params.chain}`);
     }
     return provider.getDormantAddresses(params);
+  }
+
+  async getAddressDistribution(params: GetAddressDistributionParams) {
+    const provider = this.get(params);
+    if (!provider.getAddressDistribution) {
+      throw new Error(`getAddressDistribution is not implemented for chain ${params.chain}`);
+    }
+    return provider.getAddressDistribution(params);
   }
 
   async getBlock(params: GetBlockParams) {

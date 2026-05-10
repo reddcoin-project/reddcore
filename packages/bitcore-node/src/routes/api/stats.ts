@@ -76,6 +76,36 @@ router.get('/rich-list', async function(req: Request, res: Response) {
  * Caveat documented in BIT-29: change-to-self resets the dormancy
  * clock; this is approximation, not balance-flow analysis.
  */
+/**
+ * Address distribution / wealth concentration across power-of-10 balance
+ * buckets.
+ *
+ * GET /api/<chain>/<network>/stats/distribution
+ *
+ * Returns `{ totalSupply, totalAddresses, buckets[] }` where each bucket
+ * is `{ min, max, addressCount, valueSum }`. Boundaries are dense — empty
+ * buckets are still returned so the UI can render a stable series.
+ *
+ * Backs the wealth-distribution component on the rich-list page (BIT-31).
+ * UTXO-only; non-UTXO providers return 501 — same pattern as rich-list.
+ * Cached 5 min; this aggregation is the same cost class as rich-list and
+ * neither needs to be real-time.
+ */
+router.get('/distribution', async function(req: Request, res: Response) {
+  const { chain, network } = req.params;
+  try {
+    const result = await ChainStateProvider.getAddressDistribution({ chain, network });
+    SetCache(res, CacheTimes.Minute * 5);
+    return res.json(result);
+  } catch (err: any) {
+    if (/not implemented/i.test(err.message || '')) {
+      return res.status(501).send(err.message);
+    }
+    logger.error('Error getting address distribution: %o', err.stack || err.message || err);
+    return res.status(500).send(err.message || err);
+  }
+});
+
 router.get('/dormant-list', async function(req: Request, res: Response) {
   const { chain, network } = req.params;
   try {

@@ -63,6 +63,21 @@ export interface DormantAddressEntry extends TopAddressEntry {
   lastActiveTime: string;       // ISO timestamp of that block
 }
 
+export type GetAddressDistributionParams = ChainNetwork;
+
+export interface DistributionBucket {
+  min: number;            // inclusive, base unit (sats for UTXO chains)
+  max: number | null;     // exclusive; null for the unbounded overflow bucket
+  addressCount: number;
+  valueSum: number;       // base unit
+}
+
+export interface AddressDistribution {
+  totalSupply: number;          // sum across all buckets, base unit
+  totalAddresses: number;       // sum across all buckets
+  buckets: DistributionBucket[];
+}
+
 export type GetBlockParams = ChainNetwork & {
   blockId?: string;
   sinceBlock?: number | string;
@@ -214,6 +229,7 @@ export interface IChainStateService {
   ): Promise<WalletBalanceType>;
   getTopAddresses?(params: GetTopAddressesParams): Promise<TopAddressEntry[]>;
   getDormantAddresses?(params: GetDormantAddressesParams): Promise<DormantAddressEntry[]>;
+  getAddressDistribution?(params: GetAddressDistributionParams): Promise<AddressDistribution>;
   getBlock(params: GetBlockParams): Promise<IBlock>;
   getBlockBeforeTime(params: GetBlockBeforeTimeParams): Promise<IBlock | null>;
   streamBlocks(params: StreamBlocksParams): any;
