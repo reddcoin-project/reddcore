@@ -2,6 +2,10 @@
 node_modules/
 .env
 *bitcore.config.*
+# Operator-local copies of the tracked bitcore-*.config.json files.
+# Use these to keep real RPC creds, hostnames, etc. out of git while
+# the tracked .json files keep placeholder/test values.
+*bitcore*.config.local.*
 .vscode
 .idea
 .DS_Store
