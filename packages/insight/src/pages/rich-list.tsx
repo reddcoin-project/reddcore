@@ -110,13 +110,17 @@ const RichList: React.FC = () => {
   }, [isLoading]);
 
   if (!currency || !network) return null;
+  // TS doesn't carry the narrowing of `let` vars into closures (.map below
+  // could in theory run after a reassignment), so freeze them as const.
+  const chain = currency;
+  const net = network;
 
   const errorMessage = error ? (error.message || 'Something went wrong. Please try again later.') : '';
 
   return (
     <>
       {errorMessage ? <Info type={'error'} message={errorMessage} /> : null}
-      <h2>{currency} {network} — rich list (top {data?.length ?? '...'})</h2>
+      <h2>{chain} {net} — rich list (top {data?.length ?? '...'})</h2>
       <Caption>
         Aggregated from current unspent outputs. Refreshes every five
         minutes. Server returns up to 1000 entries; the page shows the
@@ -129,19 +133,19 @@ const RichList: React.FC = () => {
               <tr>
                 <th style={{textAlign: 'right'}}>#</th>
                 <th>Address</th>
-                <th style={{textAlign: 'right'}}>Balance ({currency})</th>
+                <th style={{textAlign: 'right'}}>Balance ({chain})</th>
               </tr>
             </thead>
             <tbody>
               {data.map(entry => (
                 <tr
                   key={entry.address}
-                  onClick={() => navigate(`/${currency}/${network}/address/${entry.address}`)}
+                  onClick={() => navigate(`/${chain}/${net}/address/${entry.address}`)}
                   title={`Open ${entry.address}`}>
                   <RankCell>{entry.rank}</RankCell>
                   <AddressCell>{entry.address}</AddressCell>
                   <BalanceCell>
-                    {Number(getConvertedValue(entry.balance, currency)).toLocaleString(
+                    {Number(getConvertedValue(entry.balance, chain)).toLocaleString(
                       undefined,
                       {minimumFractionDigits: 0, maximumFractionDigits: 8}
                     )}
