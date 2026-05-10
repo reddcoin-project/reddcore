@@ -50,6 +50,19 @@ export interface TopAddressEntry {
   balance: number;        // unspent confirmed balance, in satoshis (or chain-equivalent base unit)
 }
 
+export type GetDormantAddressesParams = ChainNetwork & {
+  args: {
+    years?: number;       // dormancy window in years; default 5, must be > 0
+    limit?: number;       // default 100, capped server-side
+    offset?: number;      // default 0
+  };
+};
+
+export interface DormantAddressEntry extends TopAddressEntry {
+  lastActiveHeight: number;     // newest mintHeight among unspent outputs (proxy for last activity)
+  lastActiveTime: string;       // ISO timestamp of that block
+}
+
 export type GetBlockParams = ChainNetwork & {
   blockId?: string;
   sinceBlock?: number | string;
@@ -200,6 +213,7 @@ export interface IChainStateService {
     params: GetBalanceForAddressParams
   ): Promise<WalletBalanceType>;
   getTopAddresses?(params: GetTopAddressesParams): Promise<TopAddressEntry[]>;
+  getDormantAddresses?(params: GetDormantAddressesParams): Promise<DormantAddressEntry[]>;
   getBlock(params: GetBlockParams): Promise<IBlock>;
   getBlockBeforeTime(params: GetBlockBeforeTimeParams): Promise<IBlock | null>;
   streamBlocks(params: StreamBlocksParams): any;

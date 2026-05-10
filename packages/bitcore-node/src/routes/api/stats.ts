@@ -60,6 +60,41 @@ router.get('/rich-list', async function(req: Request, res: Response) {
   }
 });
 
+/**
+ * Top-N addresses by current balance, filtered to those with no
+ * receive activity for ≥ `years` years.
+ *
+ * GET /api/<chain>/<network>/stats/dormant-list?years=5&limit=100&offset=0
+ *
+ * Returns the rich-list shape plus per-row `lastActiveHeight` and
+ * `lastActiveTime` (ISO timestamp). `years` defaults to 5; common buckets
+ * the UI exposes are 1, 2, 3, 5, 7, 10.
+ *
+ * Same caching strategy as rich-list (5 min). Same UTXO-only
+ * implementation note re: non-UTXO providers (501).
+ *
+ * Caveat documented in BIT-29: change-to-self resets the dormancy
+ * clock; this is approximation, not balance-flow analysis.
+ */
+router.get('/dormant-list', async function(req: Request, res: Response) {
+  const { chain, network } = req.params;
+  try {
+    const result = await ChainStateProvider.getDormantAddresses({
+      chain,
+      network,
+      args: req.query
+    });
+    SetCache(res, CacheTimes.Minute * 5);
+    return res.json(result);
+  } catch (err: any) {
+    if (/not implemented/i.test(err.message || '')) {
+      return res.status(501).send(err.message);
+    }
+    logger.error('Error getting dormant list: %o', err.stack || err.message || err);
+    return res.status(500).send(err.message || err);
+  }
+});
+
 export const statsRoute = {
   router,
   path: '/stats'

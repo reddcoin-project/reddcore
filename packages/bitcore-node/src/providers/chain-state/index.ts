@@ -7,6 +7,7 @@ import {
   GetBalanceForAddressParams,
   GetBlockBeforeTimeParams,
   GetBlockParams,
+  GetDormantAddressesParams,
   GetEstimatePriorityFeeParams,
   GetEstimateSmartFeeParams,
   GetTopAddressesParams,
@@ -50,6 +51,14 @@ class ChainStateProxy implements IChainStateProvider {
       throw new Error(`getTopAddresses is not implemented for chain ${params.chain}`);
     }
     return provider.getTopAddresses(params);
+  }
+
+  async getDormantAddresses(params: GetDormantAddressesParams) {
+    const provider = this.get(params);
+    if (!provider.getDormantAddresses) {
+      throw new Error(`getDormantAddresses is not implemented for chain ${params.chain}`);
+    }
+    return provider.getDormantAddresses(params);
   }
 
   async getBlock(params: GetBlockParams) {

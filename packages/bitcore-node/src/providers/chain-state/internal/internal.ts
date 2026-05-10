@@ -27,8 +27,10 @@ import type {
   BroadcastTransactionParams,
   CreateWalletParams,
   DailyTransactionsParams,
+  DormantAddressEntry,
   GetBalanceForAddressParams,
   GetBlockParams,
+  GetDormantAddressesParams,
   GetEstimateSmartFeeParams,
   GetTopAddressesParams,
   GetWalletBalanceAtTimeParams,
@@ -134,6 +136,86 @@ export class InternalStateProvider implements IChainStateService {
       rank: offset + i + 1,
       address: r._id,
       balance: r.balance
+    }));
+  }
+
+  async getDormantAddresses(params: GetDormantAddressesParams): Promise<DormantAddressEntry[]> {
+    const { chain, network, args } = params;
+    const limit = Math.min(Math.max(Number(args.limit) || 100, 1), 1000);
+    const offset = Math.max(Number(args.offset) || 0, 0);
+    const years = Math.max(Number(args.years) || 5, 1);
+
+    // Cutoff = newest block whose time is before (now - years). Looking
+    // up by time honours actual block intervals (RDD's PoSV transition
+    // changed effective rate over time; a constant-blocks-per-year
+    // approximation would drift).
+    const cutoffDate = new Date(Date.now() - years * 365.25 * 24 * 60 * 60 * 1000);
+    const cutoffBlock = await BitcoinBlockStorage.collection.findOne(
+      { chain, network, processed: true, time: { $lt: cutoffDate } },
+      { sort: { time: -1 }, projection: { height: 1 } }
+    );
+    if (!cutoffBlock) {
+      // Chain younger than the requested dormancy window — nothing qualifies.
+      return [];
+    }
+    const cutoffHeight = cutoffBlock.height;
+
+    // Aggregate unspent outputs per address, keep $max(mintHeight) as the
+    // "last activity" proxy. Filter the post-group set to addresses whose
+    // most-recent receive is older than the cutoff. Sort by balance desc
+    // and page.
+    //
+    // Caveat (documented in BIT-29): a "Payment to yourself" tx that
+    // creates a change output back to the same address will reset this
+    // clock even though the holder didn't externally move funds. True
+    // dormancy via UTXO-age tracking is a follow-up.
+    const grouped = await CoinStorage.collection
+      .aggregate<{ _id: string; balance: number; lastActiveHeight: number }>(
+        [
+          {
+            $match: {
+              chain,
+              network,
+              spentHeight: { $lt: SpentHeightIndicators.minimum },
+              mintHeight: { $gt: SpentHeightIndicators.conflicting }
+            }
+          },
+          {
+            $group: {
+              _id: '$address',
+              balance: { $sum: '$value' },
+              lastActiveHeight: { $max: '$mintHeight' }
+            }
+          },
+          { $match: { lastActiveHeight: { $lt: cutoffHeight, $gt: 0 } } },
+          { $sort: { balance: -1 } },
+          { $skip: offset },
+          { $limit: limit }
+        ],
+        { allowDiskUse: true }
+      )
+      .toArray();
+
+    if (grouped.length === 0) return [];
+
+    // Resolve last-active timestamps by joining with the block collection
+    // for each unique height. One round trip; small set (≤ limit distinct
+    // heights, capped at 1000).
+    const heights = Array.from(new Set(grouped.map(g => g.lastActiveHeight)));
+    const blocks = await BitcoinBlockStorage.collection
+      .find(
+        { chain, network, height: { $in: heights } },
+        { projection: { height: 1, time: 1 } }
+      )
+      .toArray();
+    const heightToTime = new Map(blocks.map(b => [b.height, b.time]));
+
+    return grouped.map((r, i) => ({
+      rank: offset + i + 1,
+      address: r._id,
+      balance: r.balance,
+      lastActiveHeight: r.lastActiveHeight,
+      lastActiveTime: (heightToTime.get(r.lastActiveHeight) || new Date(0)).toISOString()
     }));
   }
 
