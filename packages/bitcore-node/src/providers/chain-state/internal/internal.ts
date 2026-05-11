@@ -58,6 +58,14 @@ import type {
 } from '../../../types/namespaces/ChainStateProvider';
 import type { ObjectId } from 'mongodb';
 
+// The partial index on `coins` keyed by `spentHeight < 0`. Every
+// chain-wide unspent aggregation (rich-list, dormant, distribution,
+// supply) hints this index explicitly: Mongo 4.x's query planner can
+// pick the wider `(chain, network, spentHeight)` index by default,
+// which scans all ~35M coins instead of just the ~14M unspent ones.
+// Hint stays valid as long as the index name lives in `models/coin.ts`.
+const UNSPENT_BY_ADDRESS_INDEX = 'address_1_chain_1_network_1';
+
 @LoggifyClass
 export class InternalStateProvider implements IChainStateService {
   chain: string;
@@ -137,7 +145,7 @@ export class InternalStateProvider implements IChainStateService {
           { $skip: offset },
           { $limit: limit }
         ],
-        { allowDiskUse: true }
+        { allowDiskUse: true, hint: UNSPENT_BY_ADDRESS_INDEX }
       )
       .toArray();
 
@@ -201,7 +209,7 @@ export class InternalStateProvider implements IChainStateService {
           { $skip: offset },
           { $limit: limit }
         ],
-        { allowDiskUse: true }
+        { allowDiskUse: true, hint: UNSPENT_BY_ADDRESS_INDEX }
       )
       .toArray();
 
@@ -261,7 +269,7 @@ export class InternalStateProvider implements IChainStateService {
             }
           }
         ],
-        { allowDiskUse: true }
+        { allowDiskUse: true, hint: UNSPENT_BY_ADDRESS_INDEX }
       )
       .toArray();
 
@@ -316,7 +324,7 @@ export class InternalStateProvider implements IChainStateService {
           },
           { $group: { _id: null, supply: { $sum: '$value' }, count: { $sum: 1 } } }
         ],
-        { allowDiskUse: true }
+        { allowDiskUse: true, hint: UNSPENT_BY_ADDRESS_INDEX }
       )
       .toArray();
 
