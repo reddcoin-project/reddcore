@@ -73,10 +73,21 @@ export interface CoinsListEth {
 
 export interface CoinsList {
   height: number;
-  value: number;
+  value: number;             // signed value to render: +received, -spent, or net for 'self'
   confirmations: number;
   mintTxid?: string;
   spentTxid?: string;
+  /**
+   * Grouping direction set by coin-list/ProcessData:
+   *   'in'   — address received in this tx (mintTxid set)
+   *   'out'  — address spent in this tx (spentTxid set)
+   *   'self' — address both received and spent in this tx (PoSV stake or
+   *            any self-pay). Both txid fields set; `value` is the net,
+   *            `inValue`/`outValue` carry the gross sides.
+   */
+  direction?: 'in' | 'out' | 'self';
+  inValue?: number;
+  outValue?: number;
 }
 
 export interface BlockTransactionDetails {

@@ -56,26 +56,75 @@ const ToUiFriendlyEthCoin = (coin: TransactionEth, blockTipHeight: number) => {
   };
 };
 
+// Group coin docs by txid. A `coins` doc carries both a mint side
+// (mintTxid: the tx that paid this address) and a spend side (spentTxid:
+// the tx where this address spent it). On a normal UTXO chain those are
+// different transactions, so each coin yields two entries with different
+// txids — one per side. On PoSV (Reddcoin) the kernel input and the
+// staked output share a txid, which used to produce two list entries for
+// every stake (BIT-33). Grouping by txid collapses those into a single
+// entry tagged direction:'self' with the net value.
+//
+// The same collapse also fixes the general self-pay case (multi-output
+// to same address, multi-input from same address) without changing how
+// distinct-tx mint/spend pairs render.
 const ProcessData = (data: any, blockTipHeight: number) => {
+  type Acc = {
+    txid: string;
+    height: number;
+    inValue: number;
+    outValue: number;
+  };
+  const groups = new Map<string, Acc>();
+
+  const upsert = (txid: string, height: number) => {
+    let g = groups.get(txid);
+    if (!g) {
+      g = {txid, height, inValue: 0, outValue: 0};
+      groups.set(txid, g);
+    } else if (g.height < 0 && height >= 0) {
+      // Prefer a confirmed height if one side is still pending/unspent.
+      g.height = height;
+    }
+    return g;
+  };
+
+  for (const coin of data) {
+    const {mintHeight, mintTxid, value, spentHeight, spentTxid} = coin;
+
+    if (mintTxid && mintHeight >= -1) {
+      upsert(mintTxid, mintHeight).inValue += value;
+    }
+    if (spentTxid && spentHeight >= -1) {
+      upsert(spentTxid, spentHeight).outValue += value;
+    }
+  }
+
   const txs: any = [];
-  for (const tx of data) {
-    const {mintHeight, mintTxid, value, spentHeight, spentTxid} = tx;
-    if (spentHeight >= -1) {
-      txs.push({
-        height: spentHeight,
-        spentTxid,
-        value,
-        confirmations: spentHeight > -1 ? blockTipHeight - spentHeight + 1 : spentHeight,
-      });
-    }
-    if (mintHeight >= -1) {
-      txs.push({
-        height: mintHeight,
-        mintTxid,
-        value,
-        confirmations: mintHeight > -1 ? blockTipHeight - mintHeight + 1 : mintHeight,
-      });
-    }
+  // Array.from instead of `for...of groups.values()` to satisfy CRA's
+  // default lib target without enabling --downlevelIteration.
+  for (const g of Array.from(groups.values())) {
+    const isIn = g.inValue > 0;
+    const isOut = g.outValue > 0;
+    const direction: 'in' | 'out' | 'self' = isIn && isOut ? 'self' : isOut ? 'out' : 'in';
+    // Display value: net for self-pays (typically a small positive stake
+    // reward), gross for the one-sided cases. Existing chip rendering for
+    // 'out' already prefixes a minus sign — keep value unsigned there to
+    // avoid double-negation.
+    const value =
+      direction === 'self' ? g.inValue - g.outValue : direction === 'out' ? g.outValue : g.inValue;
+
+    txs.push({
+      txid: g.txid,
+      height: g.height,
+      confirmations: g.height > -1 ? blockTipHeight - g.height + 1 : g.height,
+      mintTxid: direction !== 'out' ? g.txid : undefined,
+      spentTxid: direction !== 'in' ? g.txid : undefined,
+      direction,
+      inValue: g.inValue,
+      outValue: g.outValue,
+      value,
+    });
   }
 
   return txs;
