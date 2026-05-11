@@ -78,6 +78,35 @@ export interface AddressDistribution {
   buckets: DistributionBucket[];
 }
 
+export type GetCirculatingSupplyParams = ChainNetwork;
+
+export interface ChainSupply {
+  circulating: number;          // sum of unspent coin values, base unit
+  unspentCount: number;         // count of unspent outputs (sanity)
+  asOfHeight: number;           // most recent processed block height
+  asOf: string;                 // ISO timestamp of that block
+}
+
+export type GetAddressStatsParams = ChainNetwork & {
+  address: string;
+};
+
+export interface AddressActivityRef {
+  height: number;
+  time: string;                 // ISO timestamp
+}
+
+export interface AddressStats {
+  address: string;
+  firstIn: AddressActivityRef | null;   // earliest mintHeight among coins paying this address
+  lastIn: AddressActivityRef | null;    // latest mintHeight
+  numIns: number;                       // count of outputs paying this address
+  firstOut: AddressActivityRef | null;  // earliest spentHeight among coins this address spent
+  lastOut: AddressActivityRef | null;   // latest spentHeight
+  numOuts: number;                      // distinct spending txs
+  capped: boolean;                      // true when address activity exceeds the server-side cap
+}
+
 export type GetBlockParams = ChainNetwork & {
   blockId?: string;
   sinceBlock?: number | string;
@@ -230,6 +259,8 @@ export interface IChainStateService {
   getTopAddresses?(params: GetTopAddressesParams): Promise<TopAddressEntry[]>;
   getDormantAddresses?(params: GetDormantAddressesParams): Promise<DormantAddressEntry[]>;
   getAddressDistribution?(params: GetAddressDistributionParams): Promise<AddressDistribution>;
+  getCirculatingSupply?(params: GetCirculatingSupplyParams): Promise<ChainSupply>;
+  getAddressStats?(params: GetAddressStatsParams): Promise<AddressStats>;
   getBlock(params: GetBlockParams): Promise<IBlock>;
   getBlockBeforeTime(params: GetBlockBeforeTimeParams): Promise<IBlock | null>;
   streamBlocks(params: StreamBlocksParams): any;

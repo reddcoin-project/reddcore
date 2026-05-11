@@ -25,14 +25,18 @@ import type { StreamBlocksParams } from '../../../types/namespaces/ChainStatePro
 import type { GetBlockBeforeTimeParams, StreamTransactionParams, WalletBalanceType } from '../../../types/namespaces/ChainStateProvider';
 import type {
   AddressDistribution,
+  AddressStats,
   BroadcastTransactionParams,
+  ChainSupply,
   CreateWalletParams,
   DailyTransactionsParams,
   DistributionBucket,
   DormantAddressEntry,
   GetAddressDistributionParams,
+  GetAddressStatsParams,
   GetBalanceForAddressParams,
   GetBlockParams,
+  GetCirculatingSupplyParams,
   GetDormantAddressesParams,
   GetEstimateSmartFeeParams,
   GetTopAddressesParams,
@@ -288,6 +292,159 @@ export class InternalStateProvider implements IChainStateService {
     const totalSupply = buckets.reduce((sum, b) => sum + b.valueSum, 0);
 
     return { totalSupply, totalAddresses, buckets };
+  }
+
+  async getCirculatingSupply(params: GetCirculatingSupplyParams): Promise<ChainSupply> {
+    const { chain, network } = params;
+
+    // Chain-wide sum of unspent values. Same access path as the distribution
+    // aggregation (partial index on address keyed by spentHeight < 0), so this
+    // is the same cost class — heavy on a cold cache, cheap with the route's
+    // 5-min wrapper.
+    const [result] = await CoinStorage.collection
+      .aggregate<{ supply: number; count: number }>(
+        [
+          {
+            $match: {
+              chain,
+              network,
+              spentHeight: { $lt: SpentHeightIndicators.minimum },
+              mintHeight: { $gt: SpentHeightIndicators.conflicting }
+            }
+          },
+          { $group: { _id: null, supply: { $sum: '$value' }, count: { $sum: 1 } } }
+        ],
+        { allowDiskUse: true }
+      )
+      .toArray();
+
+    const tip = await BitcoinBlockStorage.collection.findOne(
+      { chain, network, processed: true },
+      { sort: { height: -1 }, projection: { height: 1, time: 1 } }
+    );
+
+    return {
+      circulating: result?.supply ?? 0,
+      unspentCount: result?.count ?? 0,
+      asOfHeight: tip?.height ?? 0,
+      asOf: (tip?.time ?? new Date(0)).toISOString()
+    };
+  }
+
+  async getAddressStats(params: GetAddressStatsParams): Promise<AddressStats> {
+    const { chain, network, address } = params;
+
+    // Hard cap to keep a single hot address (e.g. an exchange) from turning
+    // a per-row enrichment fan-out into a chain-wide scan. 10k UTXOs covers
+    // every realistic personal-wallet case; anything more is an institutional
+    // address where exact counts aren't the interesting datum anyway.
+    const MAX_COINS = 10_000;
+
+    // One round trip: $limit gates how much work the rest of the pipeline
+    // sees, then $facet splits into three parallel reductions over the
+    // same gated input.
+    //   - totalSeen: how many docs we matched (== cap+1 → over-cap)
+    //   - ins:      one group → min/max mintHeight + count of receives
+    //   - outs:     group-by-spentTxid (distinct spending tx) → min/max
+    //               spentHeight + count of those distinct txs
+    const [agg] = await CoinStorage.collection
+      .aggregate<{
+      totalSeen: Array<{ n: number }>;
+      ins: Array<{ first: number; last: number; n: number }>;
+      outs: Array<{ first: number; last: number; n: number }>;
+    }>(
+        [
+          { $match: { chain, network, address } },
+          { $limit: MAX_COINS + 1 },
+          {
+            $facet: {
+              totalSeen: [{ $count: 'n' }],
+              ins: [
+                { $match: { mintHeight: { $gt: SpentHeightIndicators.conflicting } } },
+                {
+                  $group: {
+                    _id: null,
+                    first: { $min: '$mintHeight' },
+                    last: { $max: '$mintHeight' },
+                    n: { $sum: 1 }
+                  }
+                }
+              ],
+              outs: [
+                {
+                  $match: {
+                    spentTxid: { $exists: true, $ne: null },
+                    spentHeight: { $gt: SpentHeightIndicators.conflicting }
+                  }
+                },
+                { $group: { _id: '$spentTxid', height: { $min: '$spentHeight' } } },
+                {
+                  $group: {
+                    _id: null,
+                    first: { $min: '$height' },
+                    last: { $max: '$height' },
+                    n: { $sum: 1 }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      )
+      .toArray();
+
+    const totalSeen = agg?.totalSeen[0]?.n ?? 0;
+    const capped = totalSeen > MAX_COINS;
+    if (capped) {
+      return {
+        address,
+        firstIn: null,
+        lastIn: null,
+        numIns: 0,
+        firstOut: null,
+        lastOut: null,
+        numOuts: 0,
+        capped: true
+      };
+    }
+
+    const ins = agg?.ins[0];
+    const outs = agg?.outs[0];
+
+    const heights = new Set<number>();
+    if (ins) {
+      heights.add(ins.first);
+      heights.add(ins.last);
+    }
+    if (outs) {
+      heights.add(outs.first);
+      heights.add(outs.last);
+    }
+    const blocks = heights.size === 0
+      ? []
+      : await BitcoinBlockStorage.collection
+        .find(
+          { chain, network, height: { $in: Array.from(heights) } },
+          { projection: { height: 1, time: 1 } }
+        )
+        .toArray();
+    const heightToTime = new Map(blocks.map(b => [b.height, b.time]));
+
+    const toRef = (h: number | undefined | null) =>
+      h === undefined || h === null
+        ? null
+        : { height: h, time: (heightToTime.get(h) || new Date(0)).toISOString() };
+
+    return {
+      address,
+      firstIn: toRef(ins?.first),
+      lastIn: toRef(ins?.last),
+      numIns: ins?.n ?? 0,
+      firstOut: toRef(outs?.first),
+      lastOut: toRef(outs?.last),
+      numOuts: outs?.n ?? 0,
+      capped: false
+    };
   }
 
   streamBlocks(params: StreamBlocksParams) {

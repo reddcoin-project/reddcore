@@ -5,9 +5,11 @@ import {
   CreateWalletParams,
   DailyTransactionsParams,
   GetAddressDistributionParams,
+  GetAddressStatsParams,
   GetBalanceForAddressParams,
   GetBlockBeforeTimeParams,
   GetBlockParams,
+  GetCirculatingSupplyParams,
   GetDormantAddressesParams,
   GetEstimatePriorityFeeParams,
   GetEstimateSmartFeeParams,
@@ -68,6 +70,22 @@ class ChainStateProxy implements IChainStateProvider {
       throw new Error(`getAddressDistribution is not implemented for chain ${params.chain}`);
     }
     return provider.getAddressDistribution(params);
+  }
+
+  async getCirculatingSupply(params: GetCirculatingSupplyParams) {
+    const provider = this.get(params);
+    if (!provider.getCirculatingSupply) {
+      throw new Error(`getCirculatingSupply is not implemented for chain ${params.chain}`);
+    }
+    return provider.getCirculatingSupply(params);
+  }
+
+  async getAddressStats(params: GetAddressStatsParams) {
+    const provider = this.get(params);
+    if (!provider.getAddressStats) {
+      throw new Error(`getAddressStats is not implemented for chain ${params.chain}`);
+    }
+    return provider.getAddressStats(params);
   }
 
   async getBlock(params: GetBlockParams) {

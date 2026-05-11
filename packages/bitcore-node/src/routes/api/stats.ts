@@ -77,6 +77,31 @@ router.get('/rich-list', async function(req: Request, res: Response) {
  * clock; this is approximation, not balance-flow analysis.
  */
 /**
+ * Chain circulating supply: sum of all unspent coin values plus the
+ * processed tip height/time the figure is "as of".
+ *
+ * GET /api/<chain>/<network>/stats/supply
+ *
+ * Backs the %-of-supply column on the rich-list page (BIT-30). UTXO-only;
+ * non-UTXO providers return 501. Cached 5 min — chain supply moves slowly
+ * and this is a full-collection aggregation.
+ */
+router.get('/supply', async function(req: Request, res: Response) {
+  const { chain, network } = req.params;
+  try {
+    const result = await ChainStateProvider.getCirculatingSupply({ chain, network });
+    SetCache(res, CacheTimes.Minute * 5);
+    return res.json(result);
+  } catch (err: any) {
+    if (/not implemented/i.test(err.message || '')) {
+      return res.status(501).send(err.message);
+    }
+    logger.error('Error getting circulating supply: %o', err.stack || err.message || err);
+    return res.status(500).send(err.message || err);
+  }
+});
+
+/**
  * Address distribution / wealth concentration across power-of-10 balance
  * buckets.
  *
