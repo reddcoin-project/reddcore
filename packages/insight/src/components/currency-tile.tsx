@@ -6,7 +6,7 @@ import {
   LineElement,
   PointElement,
 } from 'chart.js';
-import {FC, memo, useEffect, useRef} from 'react';
+import {FC, MouseEvent, memo, useEffect, useRef} from 'react';
 import {useNavigate} from 'react-router-dom';
 import styled, {css} from 'styled-components';
 import {useApi} from '../api/api';
@@ -112,6 +112,18 @@ const ChartContainer = styled.div`
   margin: 2rem -${gutter};
 `;
 
+const QuickLinks = styled.div`
+  margin-top: 0.75rem;
+  text-align: right;
+`;
+
+const QuickLink = styled.span`
+  font-size: 0.85em;
+  cursor: pointer;
+  color: ${({theme: {dark}}) => (dark ? '#7ab' : '#06c')};
+  &:hover { text-decoration: underline; }
+`;
+
 interface CurrencyTileProps {
   currency: string;
 }
@@ -213,6 +225,12 @@ const CurrencyTile: FC<CurrencyTileProps> = ({currency}) => {
     navigate(`/${currency}/mainnet/blocks`);
   };
 
+  const gotoStats = (e: MouseEvent) => {
+    // Stop the click bubbling to the tile's onClick (which goes to /blocks).
+    e.stopPropagation();
+    navigate(`/${currency}/mainnet/stats`);
+  };
+
   return (
     <CurrencyTileDiv currency={currency} onClick={gotoChain} key={currency}>
       <CurrencyTileHeader>
@@ -248,6 +266,10 @@ const CurrencyTile: FC<CurrencyTileProps> = ({currency}) => {
         <CurrencyTileDesc>Size</CurrencyTileDesc>
         <CurrencyTileDesc value>{size}</CurrencyTileDesc>
       </Tile>
+
+      <QuickLinks>
+        <QuickLink onClick={gotoStats}>Stats →</QuickLink>
+      </QuickLinks>
     </CurrencyTileDiv>
   );
 };
