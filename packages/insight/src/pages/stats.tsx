@@ -18,9 +18,12 @@ import {
 // All four underlying endpoints cache 5 min server-side; matching that
 // here keeps the page snappy and avoids redundant network chatter.
 const REFRESH_MS = 5 * 60_000;
+const ACTIVE_REFRESH_MS = 10 * 60_000;  // matches /stats/active cache
 const PREVIEW_TOP_LIMIT = 8;
 const PREVIEW_DORMANT_LIMIT = 5;
+const PREVIEW_ACTIVE_LIMIT = 5;
 const DEFAULT_DORMANCY_YEARS = 5;
+const ACTIVE_PREVIEW_WINDOW_DAYS = 7;
 
 interface ChainSupply {
   circulating: number;
@@ -41,6 +44,14 @@ interface RichListEntry {
 }
 
 interface DormantEntry extends RichListEntry {
+  lastActiveHeight: number;
+  lastActiveTime: string;
+}
+
+interface ActiveEntry {
+  rank: number;
+  address: string;
+  txCount: number;
   lastActiveHeight: number;
   lastActiveTime: string;
 }
@@ -185,6 +196,9 @@ const Stats: React.FC = () => {
   const dormUrl = apiBase
     ? `${apiBase}/stats/dormant-list?years=${DEFAULT_DORMANCY_YEARS}&limit=${PREVIEW_DORMANT_LIMIT}`
     : null;
+  const activeUrl = apiBase
+    ? `${apiBase}/stats/active?windowDays=${ACTIVE_PREVIEW_WINDOW_DAYS}&filter=staking&limit=${PREVIEW_ACTIVE_LIMIT}`
+    : null;
 
   const {data: supply, error: supplyErr} = useApi(supplyUrl, {refreshInterval: REFRESH_MS}) as {
     data?: ChainSupply;
@@ -198,6 +212,9 @@ const Stats: React.FC = () => {
   };
   const {data: dormant} = useApi(dormUrl, {refreshInterval: REFRESH_MS}) as {
     data?: DormantEntry[];
+  };
+  const {data: activeStakers} = useApi(activeUrl, {refreshInterval: ACTIVE_REFRESH_MS}) as {
+    data?: ActiveEntry[];
   };
 
   const isLoading = !!supplyUrl && !supply && !supplyErr;
@@ -284,6 +301,55 @@ const Stats: React.FC = () => {
               </tbody>
             </PreviewTable>
           </Wrapper>
+        ) : null}
+      </Section>
+
+      <Section>
+        <SectionHeader>
+          <h3>Active stakers (last {ACTIVE_PREVIEW_WINDOW_DAYS}d)</h3>
+          <ViewAll
+            onClick={() =>
+              navigate(
+                `/${chain}/${net}/active?filter=staking&windowDays=${ACTIVE_PREVIEW_WINDOW_DAYS}`
+              )
+            }>
+            All active addresses →
+          </ViewAll>
+        </SectionHeader>
+        {activeStakers ? (
+          activeStakers.length === 0 ? (
+            <p style={{fontSize: '0.9em', opacity: 0.7}}>
+              No coinstake transactions seen in the last {ACTIVE_PREVIEW_WINDOW_DAYS} days.
+            </p>
+          ) : (
+            <Wrapper>
+              <PreviewTable>
+                <thead>
+                  <tr>
+                    <th className='num'>#</th>
+                    <th>Address</th>
+                    <th className='num'>Stakes ({ACTIVE_PREVIEW_WINDOW_DAYS}d)</th>
+                    <th className='num'>Last stake</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeStakers.map(e => (
+                    <tr
+                      key={e.address}
+                      onClick={() => navigate(`/${chain}/${net}/address/${e.address}`)}
+                      title={`Open ${e.address}`}>
+                      <RankCell>{e.rank}</RankCell>
+                      <AddressCell>{e.address}</AddressCell>
+                      <td className='num'>{e.txCount.toLocaleString()}</td>
+                      <td className='num' title={`block ${e.lastActiveHeight.toLocaleString()}`}>
+                        {formatDate(e.lastActiveTime)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </PreviewTable>
+            </Wrapper>
+          )
         ) : null}
       </Section>
 

@@ -7,6 +7,7 @@ const TransactionHash = lazy(() => import('./pages/transaction'));
 const Address = lazy(() => import('./pages/address'));
 const RichList = lazy(() => import('./pages/rich-list'));
 const DormantList = lazy(() => import('./pages/dormant-list'));
+const ActiveList = lazy(() => import('./pages/active-list'));
 const Stats = lazy(() => import('./pages/stats'));
 const Search = lazy(() => import('./pages/search'));
 
@@ -22,6 +23,7 @@ function Routing() {
         <Route path='/:currency/:network/stats' element={<Stats />} />
         <Route path='/:currency/:network/rich-list' element={<RichList />} />
         <Route path='/:currency/:network/dormant' element={<DormantList />} />
+        <Route path='/:currency/:network/active' element={<ActiveList />} />
         <Route path='/search' element={<Search />} />
         {/* 404 redirect to home page */}
         <Route path='*' element={<Navigate to='/' />} />

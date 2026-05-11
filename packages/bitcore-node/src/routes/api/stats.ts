@@ -150,6 +150,42 @@ router.get('/dormant-list', async function(req: Request, res: Response) {
   }
 });
 
+/**
+ * Top-N "active" addresses over a recent window.
+ *
+ * GET /api/<chain>/<network>/stats/active
+ *   ?windowDays=30                          (1..365, default 30)
+ *   &filter=any|received|sent|staking       (default 'any')
+ *   &limit=100&offset=0
+ *
+ * Backs the active-addresses page + summary insert (BIT-32).
+ *
+ * `staking` joins coinstake transactions in the window with their
+ * outputs to surface the actively-staking population — Reddcoin-
+ * specific signal of which holders are running staking nodes.
+ *
+ * UTXO-only; non-UTXO providers return 501. Cached 10 min; the
+ * underlying aggregation is window-bounded but still non-trivial.
+ */
+router.get('/active', async function(req: Request, res: Response) {
+  const { chain, network } = req.params;
+  try {
+    const result = await ChainStateProvider.getActiveAddresses({
+      chain,
+      network,
+      args: req.query
+    });
+    SetCache(res, CacheTimes.Minute * 10);
+    return res.json(result);
+  } catch (err: any) {
+    if (/not implemented/i.test(err.message || '')) {
+      return res.status(501).send(err.message);
+    }
+    logger.error('Error getting active addresses: %o', err.stack || err.message || err);
+    return res.status(500).send(err.message || err);
+  }
+});
+
 export const statsRoute = {
   router,
   path: '/stats'

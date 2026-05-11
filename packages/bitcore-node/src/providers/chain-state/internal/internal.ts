@@ -24,6 +24,7 @@ import type { TransactionJSON } from '../../../types/Transaction';
 import type { StreamBlocksParams } from '../../../types/namespaces/ChainStateProvider';
 import type { GetBlockBeforeTimeParams, StreamTransactionParams, WalletBalanceType } from '../../../types/namespaces/ChainStateProvider';
 import type {
+  ActiveAddressEntry,
   AddressDistribution,
   AddressStats,
   BroadcastTransactionParams,
@@ -32,6 +33,7 @@ import type {
   DailyTransactionsParams,
   DistributionBucket,
   DormantAddressEntry,
+  GetActiveAddressesParams,
   GetAddressDistributionParams,
   GetAddressStatsParams,
   GetBalanceForAddressParams,
@@ -445,6 +447,160 @@ export class InternalStateProvider implements IChainStateService {
       numOuts: outs?.n ?? 0,
       capped: false
     };
+  }
+
+  async getActiveAddresses(params: GetActiveAddressesParams): Promise<ActiveAddressEntry[]> {
+    const { chain, network, args } = params;
+    const limit = Math.min(Math.max(Number(args.limit) || 100, 1), 1000);
+    const offset = Math.max(Number(args.offset) || 0, 0);
+    const windowDays = Math.min(Math.max(Number(args.windowDays) || 30, 1), 365);
+    const filter = args.filter || 'any';
+
+    // Cutoff = newest block whose time is before (now - windowDays). Same
+    // time-based approach used by the dormant query — honours actual block
+    // intervals across PoW→PoSV.
+    const cutoffDate = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
+    const cutoffBlock = await BitcoinBlockStorage.collection.findOne(
+      { chain, network, processed: true, time: { $lt: cutoffDate } },
+      { sort: { time: -1 }, projection: { height: 1 } }
+    );
+    // No block older than the window — the entire chain falls inside it.
+    // Use height 0 as the cutoff so every confirmed coin/tx qualifies.
+    const cutoffHeight = cutoffBlock?.height ?? 0;
+
+    let grouped: Array<{ _id: string; txCount: number; lastActiveHeight: number }> = [];
+
+    // Reddcoin PoSV coinstake txs have an empty (non-standard) output at
+    // index 0; bitcore stores those coin docs with address: 'false'. They
+    // would otherwise dominate "any" rankings and contaminate "received"
+    // counts, so filter them out at the source.
+    //
+    // Note: this pipeline targets MongoDB 3.4. $expr and the pipeline form
+    // of $lookup don't exist there; we use the older localField/foreignField
+    // form and avoid $expr in $match.
+    const realAddress = { address: { $nin: ['', 'false', null] as Array<string | null> } };
+
+    if (filter === 'staking') {
+      // Two-step: list coinstake txids in window, then aggregate their
+      // outputs in `coins` via an $in match. Avoids $lookup entirely —
+      // works on Mongo 3.4. The $in list is bounded: a 365-day window has
+      // ~525k coinstake txids worst case (under BSON limits); typical 30d
+      // window is ~43k.
+      const coinstakeTxs = await TransactionStorage.collection
+        .find(
+          { chain, network, coinstake: true, blockHeight: { $gte: cutoffHeight } },
+          { projection: { txid: 1, blockHeight: 1 } }
+        )
+        .toArray();
+
+      if (coinstakeTxs.length === 0) return [];
+
+      const txids = coinstakeTxs.map(t => t.txid);
+      grouped = await CoinStorage.collection
+        .aggregate<{ _id: string; txCount: number; lastActiveHeight: number }>(
+          [
+            {
+              $match: {
+                chain,
+                network,
+                mintTxid: { $in: txids },
+                mintIndex: { $gte: 1 },
+                ...realAddress
+              }
+            },
+            // Distinct (address, mintTxid) — a coinstake with multiple paying
+            // outputs to the same address still counts as one stake event.
+            { $group: { _id: { address: '$address', txid: '$mintTxid' }, h: { $max: '$mintHeight' } } },
+            { $group: { _id: '$_id.address', txCount: { $sum: 1 }, lastActiveHeight: { $max: '$h' } } },
+            { $sort: { txCount: -1, lastActiveHeight: -1 } },
+            { $skip: offset },
+            { $limit: limit }
+          ],
+          { allowDiskUse: true }
+        )
+        .toArray();
+    } else {
+      // any | received | sent — coins-based aggregation. Per side:
+      //   received: count distinct mintTxid per address where mintHeight ≥ cutoff
+      //   sent:     count distinct spentTxid per address where spentHeight ≥ cutoff
+      //   any:      union of both, summed
+      const receiveMatch = {
+        chain,
+        network,
+        mintHeight: { $gte: cutoffHeight },
+        ...realAddress
+      };
+      const spendMatch = {
+        chain,
+        network,
+        spentHeight: { $gte: cutoffHeight },
+        spentTxid: { $exists: true, $ne: null },
+        ...realAddress
+      };
+
+      const tally = new Map<string, { txCount: number; lastActiveHeight: number }>();
+      const bump = (addr: string, n: number, h: number) => {
+        const cur = tally.get(addr);
+        if (cur) {
+          cur.txCount += n;
+          if (h > cur.lastActiveHeight) cur.lastActiveHeight = h;
+        } else {
+          tally.set(addr, { txCount: n, lastActiveHeight: h });
+        }
+      };
+
+      if (filter === 'received' || filter === 'any') {
+        const rows = await CoinStorage.collection
+          .aggregate<{ _id: string; txCount: number; lastActiveHeight: number }>(
+            [
+              { $match: receiveMatch },
+              { $group: { _id: { address: '$address', txid: '$mintTxid' }, h: { $max: '$mintHeight' } } },
+              { $group: { _id: '$_id.address', txCount: { $sum: 1 }, lastActiveHeight: { $max: '$h' } } }
+            ],
+            { allowDiskUse: true }
+          )
+          .toArray();
+        for (const r of rows) bump(r._id, r.txCount, r.lastActiveHeight);
+      }
+      if (filter === 'sent' || filter === 'any') {
+        const rows = await CoinStorage.collection
+          .aggregate<{ _id: string; txCount: number; lastActiveHeight: number }>(
+            [
+              { $match: spendMatch },
+              { $group: { _id: { address: '$address', txid: '$spentTxid' }, h: { $max: '$spentHeight' } } },
+              { $group: { _id: '$_id.address', txCount: { $sum: 1 }, lastActiveHeight: { $max: '$h' } } }
+            ],
+            { allowDiskUse: true }
+          )
+          .toArray();
+        for (const r of rows) bump(r._id, r.txCount, r.lastActiveHeight);
+      }
+
+      grouped = Array.from(tally.entries())
+        .map(([address, v]) => ({ _id: address, txCount: v.txCount, lastActiveHeight: v.lastActiveHeight }))
+        .sort((a, b) => b.txCount - a.txCount || b.lastActiveHeight - a.lastActiveHeight)
+        .slice(offset, offset + limit);
+    }
+
+    if (grouped.length === 0) return [];
+
+    // Resolve last-active times in one batch.
+    const heights = Array.from(new Set(grouped.map(g => g.lastActiveHeight)));
+    const blocks = await BitcoinBlockStorage.collection
+      .find(
+        { chain, network, height: { $in: heights } },
+        { projection: { height: 1, time: 1 } }
+      )
+      .toArray();
+    const heightToTime = new Map(blocks.map(b => [b.height, b.time]));
+
+    return grouped.map((g, i) => ({
+      rank: offset + i + 1,
+      address: g._id,
+      txCount: g.txCount,
+      lastActiveHeight: g.lastActiveHeight,
+      lastActiveTime: (heightToTime.get(g.lastActiveHeight) || new Date(0)).toISOString()
+    }));
   }
 
   streamBlocks(params: StreamBlocksParams) {

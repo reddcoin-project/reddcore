@@ -107,6 +107,25 @@ export interface AddressStats {
   capped: boolean;                      // true when address activity exceeds the server-side cap
 }
 
+export type ActiveAddressFilter = 'any' | 'received' | 'sent' | 'staking';
+
+export type GetActiveAddressesParams = ChainNetwork & {
+  args: {
+    windowDays?: number;         // lookback window, default 30
+    filter?: ActiveAddressFilter;
+    limit?: number;              // default 100, capped server-side
+    offset?: number;
+  };
+};
+
+export interface ActiveAddressEntry {
+  rank: number;
+  address: string;
+  txCount: number;                // count of in-window activity events (filter-dependent)
+  lastActiveHeight: number;       // max height across the included events
+  lastActiveTime: string;         // ISO timestamp of that block
+}
+
 export type GetBlockParams = ChainNetwork & {
   blockId?: string;
   sinceBlock?: number | string;
@@ -261,6 +280,7 @@ export interface IChainStateService {
   getAddressDistribution?(params: GetAddressDistributionParams): Promise<AddressDistribution>;
   getCirculatingSupply?(params: GetCirculatingSupplyParams): Promise<ChainSupply>;
   getAddressStats?(params: GetAddressStatsParams): Promise<AddressStats>;
+  getActiveAddresses?(params: GetActiveAddressesParams): Promise<ActiveAddressEntry[]>;
   getBlock(params: GetBlockParams): Promise<IBlock>;
   getBlockBeforeTime(params: GetBlockBeforeTimeParams): Promise<IBlock | null>;
   streamBlocks(params: StreamBlocksParams): any;
