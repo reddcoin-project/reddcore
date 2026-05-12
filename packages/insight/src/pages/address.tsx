@@ -6,6 +6,30 @@ import Info from '../components/info';
 import CopyText from '../components/copy-text';
 import SupCurrencyLogo from '../components/icons/sup-currency-logo';
 
+// BIT-30 / BIT-44 — per-address activity stats.
+interface AddressActivityRef {
+  height: number;
+  time: string;  // ISO
+}
+
+interface AddressStats {
+  address: string;
+  firstIn: AddressActivityRef | null;
+  lastIn: AddressActivityRef | null;
+  numIns: number;
+  firstOut: AddressActivityRef | null;
+  lastOut: AddressActivityRef | null;
+  numOuts: number;
+  capped: boolean;
+}
+
+const formatActivityDate = (ref: AddressActivityRef | null): string => {
+  if (!ref) return '—';
+  const d = new Date(ref.time);
+  if (isNaN(d.getTime())) return '—';
+  return d.toISOString().slice(0, 10);
+};
+
 import {getApiRoot, getConvertedValue, normalizeParams} from '../utilities/helper-methods';
 import {device} from '../utilities/constants';
 
@@ -45,6 +69,7 @@ const Address: React.FC = () => {
   const [balance, setBalance] = useState<any>();
   const [tip, setTip] = useState<any>();
   const [txs, setTxs] = useState<any>();
+  const [stats, setStats] = useState<AddressStats | null>(null);
 
   useEffect(() => {
     if (!currency || !network || !address) return;
@@ -74,6 +99,13 @@ const Address: React.FC = () => {
         setIsLoading(false);
         nProgress.done();
       });
+
+    // Activity stats are a separate fetch — they're cheap, but they can 501
+    // on chains whose provider doesn't implement getAddressStats (BIT-30).
+    // Swallow the failure so the rest of the page still renders.
+    fetcher(`${baseUrl}/address/${address}/stats`)
+      .then((s: AddressStats) => setStats(s))
+      .catch(() => setStats(null));
   }, [currency, network, address]);
 
   return (
@@ -117,6 +149,45 @@ const Address: React.FC = () => {
                       {numTransactions || 0}
                     </TileDescription>
                   </Tile>
+
+                  {stats && (stats.firstIn || stats.firstOut) && (
+                    <>
+                      <Tile withBorderBottom>
+                        <TileDescription margin='0 1rem 0 0'>First active</TileDescription>
+                        <TileDescription
+                          value
+                          textAlign='right'
+                          title={
+                            stats.firstIn
+                              ? `block ${stats.firstIn.height.toLocaleString()}`
+                              : ''
+                          }>
+                          {formatActivityDate(stats.firstIn || stats.firstOut)}
+                        </TileDescription>
+                      </Tile>
+                      <Tile withBorderBottom>
+                        <TileDescription margin='0 1rem 0 0'>Last active</TileDescription>
+                        <TileDescription
+                          value
+                          textAlign='right'
+                          title={
+                            stats.lastIn
+                              ? `block ${stats.lastIn.height.toLocaleString()}`
+                              : ''
+                          }>
+                          {formatActivityDate(stats.lastIn || stats.lastOut)}
+                        </TileDescription>
+                      </Tile>
+                      {stats.capped && (
+                        <Tile withBorderBottom>
+                          <TileDescription margin='0 1rem 0 0'>Tx volume</TileDescription>
+                          <TileDescription value textAlign='right' title='Exact counts unavailable for addresses with more than 10,000 lifetime coin entries'>
+                            ≥10,000
+                          </TileDescription>
+                        </Tile>
+                      )}
+                    </>
+                  )}
                 </TransactionBodyCol>
 
                 <TransactionBodyCol

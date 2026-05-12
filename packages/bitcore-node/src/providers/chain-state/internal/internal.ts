@@ -344,41 +344,74 @@ export class InternalStateProvider implements IChainStateService {
   async getAddressStats(params: GetAddressStatsParams): Promise<AddressStats> {
     const { chain, network, address } = params;
 
-    // Hard cap to keep a single hot address (e.g. an exchange) from turning
-    // a per-row enrichment fan-out into a chain-wide scan. 10k UTXOs covers
-    // every realistic personal-wallet case; anything more is an institutional
-    // address where exact counts aren't the interesting datum anyway.
+    // Cap applies to the *count* aggregations, which are O(docs-per-address).
+    // The min/max date queries below are O(1) via the address index regardless
+    // of address volume, so we compute those for every address — capped or not.
+    // (BIT-44: capped addresses previously got null dates, which made the
+    // address page useless for any high-volume holder.)
     const MAX_COINS = 10_000;
 
-    // One round trip: $limit gates how much work the rest of the pipeline
-    // sees, then $facet splits into three parallel reductions over the
-    // same gated input.
-    //   - totalSeen: how many docs we matched (== cap+1 → over-cap)
-    //   - ins:      one group → min/max mintHeight + count of receives
-    //   - outs:     group-by-spentTxid (distinct spending tx) → min/max
-    //               spentHeight + count of those distinct txs
+    // Cheap min/max lookups via the (address, ...) compound index plus the
+    // plain {address: 1} index. Four sort-and-limit-1 queries fan out in
+    // parallel; each returns the first doc the index walker hits, no scan.
+    const baseQuery = { chain, network, address };
+    const [firstInDoc, lastInDoc, firstOutDoc, lastOutDoc] = await Promise.all([
+      CoinStorage.collection
+        .find({ ...baseQuery, mintHeight: { $gt: SpentHeightIndicators.conflicting } })
+        .project({ mintHeight: 1 })
+        .sort({ mintHeight: 1 })
+        .limit(1)
+        .toArray(),
+      CoinStorage.collection
+        .find({ ...baseQuery, mintHeight: { $gt: SpentHeightIndicators.conflicting } })
+        .project({ mintHeight: 1 })
+        .sort({ mintHeight: -1 })
+        .limit(1)
+        .toArray(),
+      CoinStorage.collection
+        .find({
+          ...baseQuery,
+          spentTxid: { $exists: true, $ne: null },
+          spentHeight: { $gt: SpentHeightIndicators.conflicting }
+        })
+        .project({ spentHeight: 1 })
+        .sort({ spentHeight: 1 })
+        .limit(1)
+        .toArray(),
+      CoinStorage.collection
+        .find({
+          ...baseQuery,
+          spentTxid: { $exists: true, $ne: null },
+          spentHeight: { $gt: SpentHeightIndicators.conflicting }
+        })
+        .project({ spentHeight: 1 })
+        .sort({ spentHeight: -1 })
+        .limit(1)
+        .toArray()
+    ]);
+
+    const firstInHeight = firstInDoc[0]?.mintHeight ?? null;
+    const lastInHeight = lastInDoc[0]?.mintHeight ?? null;
+    const firstOutHeight = firstOutDoc[0]?.spentHeight ?? null;
+    const lastOutHeight = lastOutDoc[0]?.spentHeight ?? null;
+
+    // Count aggregations: capped to MAX_COINS+1 docs so a hot address can't
+    // turn the BIT-30 rich-list fan-out into a chain-wide scan.
     const [agg] = await CoinStorage.collection
       .aggregate<{
       totalSeen: Array<{ n: number }>;
-      ins: Array<{ first: number; last: number; n: number }>;
-      outs: Array<{ first: number; last: number; n: number }>;
+      ins: Array<{ n: number }>;
+      outs: Array<{ n: number }>;
     }>(
         [
-          { $match: { chain, network, address } },
+          { $match: baseQuery },
           { $limit: MAX_COINS + 1 },
           {
             $facet: {
               totalSeen: [{ $count: 'n' }],
               ins: [
                 { $match: { mintHeight: { $gt: SpentHeightIndicators.conflicting } } },
-                {
-                  $group: {
-                    _id: null,
-                    first: { $min: '$mintHeight' },
-                    last: { $max: '$mintHeight' },
-                    n: { $sum: 1 }
-                  }
-                }
+                { $count: 'n' }
               ],
               outs: [
                 {
@@ -387,15 +420,8 @@ export class InternalStateProvider implements IChainStateService {
                     spentHeight: { $gt: SpentHeightIndicators.conflicting }
                   }
                 },
-                { $group: { _id: '$spentTxid', height: { $min: '$spentHeight' } } },
-                {
-                  $group: {
-                    _id: null,
-                    first: { $min: '$height' },
-                    last: { $max: '$height' },
-                    n: { $sum: 1 }
-                  }
-                }
+                { $group: { _id: '$spentTxid' } },
+                { $count: 'n' }
               ]
             }
           }
@@ -405,30 +431,13 @@ export class InternalStateProvider implements IChainStateService {
 
     const totalSeen = agg?.totalSeen[0]?.n ?? 0;
     const capped = totalSeen > MAX_COINS;
-    if (capped) {
-      return {
-        address,
-        firstIn: null,
-        lastIn: null,
-        numIns: 0,
-        firstOut: null,
-        lastOut: null,
-        numOuts: 0,
-        capped: true
-      };
-    }
+    const numIns = capped ? 0 : (agg?.ins[0]?.n ?? 0);
+    const numOuts = capped ? 0 : (agg?.outs[0]?.n ?? 0);
 
-    const ins = agg?.ins[0];
-    const outs = agg?.outs[0];
-
+    // Resolve heights → block times in one batched lookup.
     const heights = new Set<number>();
-    if (ins) {
-      heights.add(ins.first);
-      heights.add(ins.last);
-    }
-    if (outs) {
-      heights.add(outs.first);
-      heights.add(outs.last);
+    for (const h of [firstInHeight, lastInHeight, firstOutHeight, lastOutHeight]) {
+      if (h !== null) heights.add(h);
     }
     const blocks = heights.size === 0
       ? []
@@ -440,20 +449,20 @@ export class InternalStateProvider implements IChainStateService {
         .toArray();
     const heightToTime = new Map(blocks.map(b => [b.height, b.time]));
 
-    const toRef = (h: number | undefined | null) =>
-      h === undefined || h === null
+    const toRef = (h: number | null) =>
+      h === null
         ? null
         : { height: h, time: (heightToTime.get(h) || new Date(0)).toISOString() };
 
     return {
       address,
-      firstIn: toRef(ins?.first),
-      lastIn: toRef(ins?.last),
-      numIns: ins?.n ?? 0,
-      firstOut: toRef(outs?.first),
-      lastOut: toRef(outs?.last),
-      numOuts: outs?.n ?? 0,
-      capped: false
+      firstIn: toRef(firstInHeight),
+      lastIn: toRef(lastInHeight),
+      numIns,
+      firstOut: toRef(firstOutHeight),
+      lastOut: toRef(lastOutHeight),
+      numOuts,
+      capped
     };
   }
 
