@@ -103,7 +103,7 @@ export class InternalStateProvider implements IChainStateService {
 
   async streamAddressTransactions(params: StreamAddressUtxosParams) {
     const { req, res, args } = params;
-    const { limit, since } = args;
+    const { limit, since, direction, offset } = args;
     const query = this.getAddressQuery(params);
     // BIT-46: page by mintHeight (newest first by default) instead of by
     // _id. _id ordering is insertion-time which approximates mint time
@@ -111,10 +111,15 @@ export class InternalStateProvider implements IChainStateService {
     // than the indexer's last reorg/refill that approximation breaks.
     // The (address, mintHeight) compound index in models/coin.ts keys
     // this read; `since` is the mintHeight cursor for "Load more".
+    //
+    // BIT-47: also accept direction (1 = oldest first, default = newest
+    // first) and offset (Mongo skip) so the address page can do real
+    // "Sort by Oldest" + numbered page-jumps. since and offset are
+    // alternatives: callers use one or the other per request.
     Storage.apiStreamingFind(
       CoinStorage,
       query,
-      { limit, since, paging: 'mintHeight' },
+      { limit, since, direction, skip: offset, paging: 'mintHeight' },
       req!,
       res!
     );

@@ -4,6 +4,7 @@ import React, {useEffect, useState} from 'react';
 import CoinList from '../components/coin-list';
 import Info from '../components/info';
 import CopyText from '../components/copy-text';
+import Pagination from '../components/pagination';
 import SupCurrencyLogo from '../components/icons/sup-currency-logo';
 
 // BIT-30 / BIT-44 — per-address activity stats.
@@ -75,10 +76,14 @@ const Address: React.FC = () => {
   const [txs, setTxs] = useState<any>();
   const [stats, setStats] = useState<AddressStats | null>(null);
   // Pagination state: hasMoreOnServer is set false when the last fetch
-  // returned fewer than TX_PAGE_SIZE rows. The next-page cursor is the
-  // minimum mintHeight in the currently-loaded set — the server pages
-  // by mintHeight DESC, so we ask for "rows older than this height".
+  // returned fewer than TX_PAGE_SIZE rows. Cursor-based "Load more" via
+  // InfiniteScroll uses the lowest currently-loaded mintHeight (BIT-46).
   const [hasMoreOnServer, setHasMoreOnServer] = useState(false);
+  // BIT-47 — server-driven sort + numbered page navigation. currentPage
+  // tracks the highest page loaded; clicking a number page-jumps with
+  // offset, clicking a sort button refetches with the new direction.
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState<'mostRecent' | 'oldest'>('mostRecent');
 
   useEffect(() => {
     if (!currency || !network || !address) return;
@@ -94,13 +99,17 @@ const Address: React.FC = () => {
     Promise.all([
       fetcher(`${baseUrl}/address/${address}/balance`),
       fetcher(`${baseUrl}/block/tip`),
-      fetcher(`${baseUrl}/address/${address}/txs?limit=${TX_PAGE_SIZE}`),
+      // Initial tx page: newest first, offset 0. Subsequent pages and
+      // sort changes go through fetchTxsPage below.
+      fetcher(`${baseUrl}/address/${address}/txs?limit=${TX_PAGE_SIZE}&offset=0`),
     ])
       .then(([_balance, _tip, _txs]) => {
         setBalance(_balance);
         setTip(_tip);
         setTxs(_txs);
         setHasMoreOnServer(Array.isArray(_txs) && _txs.length >= TX_PAGE_SIZE);
+        setCurrentPage(1);
+        setSortOrder('mostRecent');
       })
       .catch((e: any) => {
         setError(e.message || 'Error getting address.');
@@ -117,6 +126,32 @@ const Address: React.FC = () => {
       .then((s: AddressStats) => setStats(s))
       .catch(() => setStats(null));
   }, [currency, network, address]);
+
+  // BIT-47: paged fetch for navigation. `mode` controls whether the
+  // result replaces the current set (sort change, page-jump) or appends
+  // (InfiniteScroll continuation). Server pages by mintHeight; direction
+  // toggles between newest-first (default) and oldest-first.
+  const fetchTxsPage = async (
+    page: number,
+    order: 'mostRecent' | 'oldest',
+    mode: 'replace' | 'append',
+  ) => {
+    if (!currency || !network || !address) return;
+    const _norm = normalizeParams(currency, network);
+    const baseUrl = `${getApiRoot(_norm.currency)}/${_norm.currency}/${_norm.network}`;
+    const offset = (page - 1) * TX_PAGE_SIZE;
+    const directionParam = order === 'oldest' ? '&direction=1' : '';
+    const url = `${baseUrl}/address/${address}/txs?limit=${TX_PAGE_SIZE}&offset=${offset}${directionParam}`;
+    const result = await fetcher(url);
+    if (!Array.isArray(result)) return;
+    if (mode === 'replace') {
+      setTxs(result);
+    } else {
+      setTxs((prev: any[]) => [...(prev || []), ...result]);
+    }
+    setHasMoreOnServer(result.length >= TX_PAGE_SIZE);
+    setCurrentPage(page);
+  };
 
   return (
     <>
@@ -212,6 +247,16 @@ const Address: React.FC = () => {
 
               <SecondaryTitle>Transactions</SecondaryTitle>
 
+              <Pagination
+                currentPage={currentPage}
+                totalPages={
+                  stats && stats.numTxs > 0
+                    ? Math.ceil(stats.numTxs / TX_PAGE_SIZE)
+                    : 0
+                }
+                onPageChange={page => fetchTxsPage(page, sortOrder, 'replace')}
+              />
+
               <CoinList
                 txs={txs}
                 currency={currency}
@@ -219,26 +264,18 @@ const Address: React.FC = () => {
                 tip={tip}
                 transactionsLength={setNumTransactions}
                 hasMoreOnServer={hasMoreOnServer}
+                order={sortOrder}
+                onSortChange={async (newOrder) => {
+                  // Server-side re-fetch with the new direction. Resets
+                  // page state to 1 and replaces the visible rows.
+                  if (newOrder === sortOrder) return;
+                  setSortOrder(newOrder);
+                  await fetchTxsPage(1, newOrder, 'replace');
+                }}
                 onLoadMore={async () => {
-                  // Server pages by mintHeight DESC; the cursor for the
-                  // next page is the lowest mintHeight currently held.
-                  // Coin docs returned from /txs always carry mintHeight.
-                  if (!txs || txs.length === 0) return;
-                  const minHeight = txs.reduce(
-                    (acc: number, t: any) =>
-                      typeof t.mintHeight === 'number' && t.mintHeight < acc ? t.mintHeight : acc,
-                    Number.POSITIVE_INFINITY,
-                  );
-                  if (!isFinite(minHeight)) return;
-                  if (!currency || !network) return;
-                  const _normalizeParams = normalizeParams(currency, network);
-                  const baseUrl = `${getApiRoot(_normalizeParams.currency)}/${_normalizeParams.currency}/${_normalizeParams.network}`;
-                  const next = await fetcher(
-                    `${baseUrl}/address/${address}/txs?limit=${TX_PAGE_SIZE}&since=${minHeight}`,
-                  );
-                  if (!Array.isArray(next)) return;
-                  setTxs((prev: any[]) => [...(prev || []), ...next]);
-                  setHasMoreOnServer(next.length >= TX_PAGE_SIZE);
+                  // InfiniteScroll-driven sequential page advance.
+                  // Appends the next page in the current sort direction.
+                  await fetchTxsPage(currentPage + 1, sortOrder, 'append');
                 }}
               />
             </motion.div>

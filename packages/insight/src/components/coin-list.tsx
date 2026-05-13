@@ -173,6 +173,15 @@ interface CoinListProps {
   /** Parent's flag — true if the server is known to have more rows
    *  beyond what's currently in `txs`. (BIT-46) */
   hasMoreOnServer?: boolean;
+  /** Called when the user clicks Most Recent / Oldest. When provided,
+   *  the parent is expected to re-fetch with the new sort and update
+   *  `txs`. CoinList's internal sort still runs for instant feedback
+   *  but will be overwritten when the parent's data lands. (BIT-47) */
+  onSortChange?: (order: 'mostRecent' | 'oldest') => void;
+  /** Externally-driven sort (BIT-47). When set, overrides CoinList's
+   *  internal `currentOrder` state — used by the parent to keep the
+   *  sort indicator in sync with the data it just fetched. */
+  order?: 'mostRecent' | 'oldest';
 }
 
 const CoinList: FC<CoinListProps> = ({
@@ -183,10 +192,14 @@ const CoinList: FC<CoinListProps> = ({
   transactionsLength,
   onLoadMore,
   hasMoreOnServer,
+  onSortChange,
+  order,
 }) => {
   const [limit, setLimit] = useState(LIMIT);
   const [chunkSize, setChunkSize] = useState(CHUNK_SIZE);
-  const [currentOrder, setCurrentOrder] = useState('mostRecent');
+  // When `order` is passed by the parent, it wins (parent owns the sort
+  // because it controls the server fetch). Otherwise default to in-memory.
+  const [currentOrder, setCurrentOrder] = useState(order || 'mostRecent');
 
   const {height} = tip;
 
@@ -215,20 +228,34 @@ const CoinList: FC<CoinListProps> = ({
     setIsLoading(false);
   }, [txs, hasMoreOnServer]);
 
-  const sortTransactions = (order: string) => {
-    if (currentOrder === order) {
+  const sortTransactions = (newOrder: 'mostRecent' | 'oldest') => {
+    if (currentOrder === newOrder) {
       return;
     }
 
     setVal(newVal + 1);
-    setCurrentOrder(order);
-    const sortedTxs = GetSortedTxs(txsCopy, order);
+    setCurrentOrder(newOrder);
+    const sortedTxs = GetSortedTxs(txsCopy, newOrder);
     setTxsCopy(sortedTxs);
     setLimit(LIMIT);
     setChunkSize(CHUNK_SIZE);
     setTransactions(sortedTxs.slice(0, LIMIT));
     setHasMoreTxs(LIMIT < sortedTxs.length || !!hasMoreOnServer);
+    // Tell the parent the sort changed so it can re-fetch from the server
+    // with the new direction. Internal sort above gives instant visual
+    // feedback while the network round-trip happens.
+    if (onSortChange) {
+      onSortChange(newOrder as 'mostRecent' | 'oldest');
+    }
   };
+
+  // When the parent passes `order` (BIT-47), keep our internal state in sync
+  // so the highlighted sort button matches whatever data the parent fetched.
+  useEffect(() => {
+    if (order && order !== currentOrder) {
+      setCurrentOrder(order);
+    }
+  }, [order]);
 
   const loadMore = () => {
     if (limit < txsCopy.length) {

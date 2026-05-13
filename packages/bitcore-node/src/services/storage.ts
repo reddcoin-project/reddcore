@@ -225,6 +225,9 @@ export class StorageService {
     if (originalOptions.limit) {
       options.limit = Number(originalOptions.limit);
     }
+    if (originalOptions.skip !== undefined && Number(originalOptions.skip) > 0) {
+      options.skip = Number(originalOptions.skip);
+    }
     return { query, options };
   }
 
