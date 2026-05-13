@@ -20,7 +20,7 @@ interface AddressStats {
   firstOut: AddressActivityRef | null;
   lastOut: AddressActivityRef | null;
   numOuts: number;
-  capped: boolean;
+  numTxs: number;
 }
 
 const formatActivityDate = (ref: AddressActivityRef | null): string => {
@@ -146,7 +146,13 @@ const Address: React.FC = () => {
                   <Tile withBorderBottom>
                     <TileDescription margin='0 1rem 0 0'>No. Transactions</TileDescription>
                     <TileDescription value textAlign='right'>
-                      {numTransactions || 0}
+                      {/* stats.numTxs is the lifetime distinct-tx count (union
+                          of receives + spends); numTransactions is the count
+                          rendered in the visible list, capped by the txs page
+                          fetch (?limit=1000). Prefer the lifetime number when
+                          stats has landed; fall back so we don't briefly show
+                          a worse number while waiting for it. */}
+                      {stats ? stats.numTxs.toLocaleString() : (numTransactions || 0)}
                     </TileDescription>
                   </Tile>
 
@@ -178,14 +184,6 @@ const Address: React.FC = () => {
                           {formatActivityDate(stats.lastIn || stats.lastOut)}
                         </TileDescription>
                       </Tile>
-                      {stats.capped && (
-                        <Tile withBorderBottom>
-                          <TileDescription margin='0 1rem 0 0'>Tx volume</TileDescription>
-                          <TileDescription value textAlign='right' title='Exact counts unavailable for addresses with more than 10,000 lifetime coin entries'>
-                            ≥10,000
-                          </TileDescription>
-                        </Tile>
-                      )}
                     </>
                   )}
                 </TransactionBodyCol>

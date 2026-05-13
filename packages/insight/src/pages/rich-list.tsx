@@ -47,7 +47,6 @@ interface AddressStats {
   firstOut: ActivityRef | null;
   lastOut: ActivityRef | null;
   numOuts: number;
-  capped: boolean;
 }
 
 const Wrapper = styled.div`
@@ -142,14 +141,12 @@ const RichListRow: React.FC<RowProps> = ({chain, network, entry, supply}) => {
 
   const renderRef = (ref: ActivityRef | null | undefined): React.ReactNode => {
     if (!stats) return <Muted>…</Muted>;
-    if (stats.capped) return <Muted>—</Muted>;
     if (!ref) return <Muted>—</Muted>;
     return <span title={`block ${ref.height.toLocaleString()}`}>{formatDate(ref.time)}</span>;
   };
 
   const renderCount = (n: number | undefined): React.ReactNode => {
     if (!stats) return <Muted>…</Muted>;
-    if (stats.capped) return <span title='Address activity exceeds the server cap'>&gt;10k</span>;
     return (n ?? 0).toLocaleString();
   };
 

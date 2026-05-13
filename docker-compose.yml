@@ -1,10 +1,18 @@
 services:
   database:
     image: mongo:4.4
-    ports: 
+    ports:
     - 27017:27017
-    volumes: 
+    volumes:
     - ${BITCORE_MONGO_DATA:-/data/db}:/data/db
+    # Default container nofile (~1024) is too low: heavy aggregations with
+    # allowDiskUse open many spill files. 64k matches systemd's typical
+    # mongod tuning and gives headroom for concurrent stat queries on
+    # high-volume addresses.
+    ulimits:
+      nofile:
+        soft: 64000
+        hard: 64000
     
   bitcore-node:
     build: .

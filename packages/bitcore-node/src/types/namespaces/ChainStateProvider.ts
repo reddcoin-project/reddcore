@@ -100,11 +100,11 @@ export interface AddressStats {
   address: string;
   firstIn: AddressActivityRef | null;   // earliest mintHeight among coins paying this address
   lastIn: AddressActivityRef | null;    // latest mintHeight
-  numIns: number;                       // count of outputs paying this address
+  numIns: number;                       // distinct mintTxids paying this address
   firstOut: AddressActivityRef | null;  // earliest spentHeight among coins this address spent
   lastOut: AddressActivityRef | null;   // latest spentHeight
   numOuts: number;                      // distinct spending txs
-  capped: boolean;                      // true when address activity exceeds the server-side cap
+  numTxs: number;                       // distinct txs ever touching this address (union of in+out)
 }
 
 export type ActiveAddressFilter = 'any' | 'received' | 'sent' | 'staking';
