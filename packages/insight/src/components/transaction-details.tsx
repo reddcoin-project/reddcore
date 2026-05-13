@@ -164,13 +164,26 @@ const TransactionDetails: FC<TransactionDetailsProps> = ({
         </TileDescription>
 
         <TileDescription textAlign='right' value padding='0 0 0 0.25rem'>
-          {`${blockHeight > -1 ? 'Mined' : 'Seen'} on: ${getFormattedDate(blockTime)}`}
+          {/* BIT-48: PoSV coinstake txs are minted (staked), not mined. */}
+          {`${blockHeight > -1 ? (isCoinstake ? 'Staked' : 'Mined') : 'Seen'} on: ${getFormattedDate(blockTime)}`}
         </TileDescription>
       </TransactionTileHeader>
 
       <TransactionTileBody>
         <TransactionBodyCol type='Five' padding='0 1rem'>
           {coinbase && <Tile>No Inputs (Newly Generated Coins)</Tile>}
+
+          {/* BIT-48: positive marker for PoSV coinstake txs. The kernel
+              UTXO is a real input (rendered below), so we don't want the
+              "Newly Generated Coins" copy — but the user should still know
+              this isn't an ordinary transfer. */}
+          {isCoinstake && (
+            <Tile>
+              Coinstake (PoSV staking)
+              {stakeReward !== undefined &&
+                ` — Reward: ${getConvertedValue(stakeReward, currency)} ${currency}`}
+            </Tile>
+          )}
 
           {!coinbase && (
             <>

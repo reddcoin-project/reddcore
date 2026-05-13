@@ -157,6 +157,12 @@ const BlockList: FC<{currency: string, network: string}> = ({currency, network})
                 if (currency === 'ETH') {
                   columnLeftExpandedDataKeys = ['Previous block', 'Block reward'];
                   columnRightExpandedDataKeys = ['Next block', 'Nonce', 'Confirmations'];
+                } else if (block.posData?.isProofOfStake) {
+                  // PoSV block (BIT-48): swap "Block reward / Miner fees"
+                  // (PoW concepts; both 0 here because the coinbase is the
+                  // empty placeholder) for the staking equivalents below.
+                  columnLeftExpandedDataKeys = ['Previous block', 'Bits', 'Version'];
+                  columnRightExpandedDataKeys = ['Next block', 'Nonce', 'Confirmations', 'Difficulty', 'Fee data'];
                 } else {
                   columnLeftExpandedDataKeys = ['Previous block', 'Bits', 'Version', 'Block reward', 'Miner fees'];
                   columnRightExpandedDataKeys = ['Next block', 'Nonce', 'Confirmations', 'Difficulty', 'Fee data'];
@@ -165,11 +171,11 @@ const BlockList: FC<{currency: string, network: string}> = ({currency, network})
                 const columnRightExpandedData : Array<{label: string, value: any}> = columnRightExpandedDataKeys.map(key => dataRowsDB[key]);
                 if (block.posData?.isProofOfStake) {
                   columnLeftExpandedData.push({
-                    label: 'Stake subsidy',
+                    label: 'Stake reward',
                     value: `${getConvertedValue(block.posData.subsidy, currency).toFixed(3)} ${currency}`,
                   });
                   columnLeftExpandedData.push({
-                    label: 'Fees collected',
+                    label: 'Stake-tx fees',
                     value: `${getConvertedValue(block.posData.totalFeesCollected, currency).toFixed(5)} ${currency}`,
                   });
                 }

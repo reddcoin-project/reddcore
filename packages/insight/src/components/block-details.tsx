@@ -241,21 +241,27 @@ const BlockDetails: FC<BlockDetailsProps> = ({currency, network, block}) => {
                   </TileLink>
                 </Tile>
 
-                <SharedTile
-                  title='Block Reward'
-                  description={`${getConvertedValue(summary.reward, currency).toFixed(3)} ${currency}`}
-                />
-                {summary.posData && summary.posData.isProofOfStake && (
+                {/* BIT-48: PoSV blocks carry the staker payout in posData
+                    (subsidy + collected fees), not in summary.reward (which
+                    is 0 because the coinbase is the empty placeholder).
+                    Show staking labels for these blocks; "Block Reward"
+                    stays for PoW blocks. */}
+                {summary.posData && summary.posData.isProofOfStake ? (
                   <>
                     <SharedTile
-                      title='Stake Subsidy'
+                      title='Stake Reward'
                       description={`${getConvertedValue(summary.posData.subsidy, currency).toFixed(3)} ${currency}`}
                     />
                     <SharedTile
-                      title='Fees Collected'
+                      title='Stake-tx Fees'
                       description={`${getConvertedValue(summary.posData.totalFeesCollected, currency).toFixed(5)} ${currency}`}
                     />
                   </>
+                ) : (
+                  <SharedTile
+                    title='Block Reward'
+                    description={`${getConvertedValue(summary.reward, currency).toFixed(3)} ${currency}`}
+                  />
                 )}
                 <SharedTile title='Confirmations' description={summary.confirmations} />
 
