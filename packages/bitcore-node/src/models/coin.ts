@@ -48,6 +48,12 @@ export class CoinModel extends BaseModel<ICoin> {
       }
     );
     this.collection.createIndex({ address: 1 }, { background: true });
+    // Compound (address, height) indexes — BIT-46. Support paged
+    // "address tx history sorted by tx height" reads without falling
+    // back to in-memory sorts. Without these, sort-by-height on a hot
+    // address (~10⁴+ coins) is a 60+s scan; with them it's index-only.
+    this.collection.createIndex({ address: 1, mintHeight: 1 }, { background: true });
+    this.collection.createIndex({ address: 1, spentHeight: 1 }, { background: true, sparse: true });
     this.collection.createIndex({ chain: 1, network: 1, mintHeight: 1 }, { background: true });
     this.collection.createIndex({ spentTxid: 1 }, { background: true, sparse: true });
     this.collection.createIndex({ chain: 1, network: 1, spentHeight: 1 }, { background: true });

@@ -165,9 +165,25 @@ interface CoinListProps {
   network: string;
   tip: any;
   transactionsLength: any;
+  /** Parent-driven pagination. Called when the InfiniteScroll trigger
+   *  fires AND there are no more client-side rows to reveal. Returns
+   *  a promise that resolves when the next page has been appended to
+   *  `txs`. */
+  onLoadMore?: () => Promise<void>;
+  /** Parent's flag — true if the server is known to have more rows
+   *  beyond what's currently in `txs`. (BIT-46) */
+  hasMoreOnServer?: boolean;
 }
 
-const CoinList: FC<CoinListProps> = ({txs, currency, network, tip, transactionsLength}) => {
+const CoinList: FC<CoinListProps> = ({
+  txs,
+  currency,
+  network,
+  tip,
+  transactionsLength,
+  onLoadMore,
+  hasMoreOnServer,
+}) => {
   const [limit, setLimit] = useState(LIMIT);
   const [chunkSize, setChunkSize] = useState(CHUNK_SIZE);
   const [currentOrder, setCurrentOrder] = useState('mostRecent');
@@ -179,6 +195,7 @@ const CoinList: FC<CoinListProps> = ({txs, currency, network, tip, transactionsL
   const [hasMoreTxs, setHasMoreTxs] = useState<boolean>(false);
   const [newVal, setVal] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchingMore, setFetchingMore] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -194,9 +211,9 @@ const CoinList: FC<CoinListProps> = ({txs, currency, network, tip, transactionsL
     setTxsCopy(_txs);
     const _transactions = _txs.slice(0, limit);
     setTransactions(_transactions);
-    setHasMoreTxs(_transactions.length < _txs.length);
+    setHasMoreTxs(_transactions.length < _txs.length || !!hasMoreOnServer);
     setIsLoading(false);
-  }, [txs]);
+  }, [txs, hasMoreOnServer]);
 
   const sortTransactions = (order: string) => {
     if (currentOrder === order) {
@@ -210,16 +227,24 @@ const CoinList: FC<CoinListProps> = ({txs, currency, network, tip, transactionsL
     setLimit(LIMIT);
     setChunkSize(CHUNK_SIZE);
     setTransactions(sortedTxs.slice(0, LIMIT));
-    setHasMoreTxs(LIMIT < sortedTxs.length);
+    setHasMoreTxs(LIMIT < sortedTxs.length || !!hasMoreOnServer);
   };
 
   const loadMore = () => {
     if (limit < txsCopy.length) {
+      // More client-side rows available — reveal them.
       const newLimit = limit + chunkSize;
       setLimit(newLimit);
       setChunkSize(chunkSize * 2);
       setTransactions(txsCopy.slice(0, newLimit));
-      setHasMoreTxs(newLimit < txs.length);
+      setHasMoreTxs(newLimit < txsCopy.length || !!hasMoreOnServer);
+    } else if (onLoadMore && hasMoreOnServer && !fetchingMore) {
+      // Client side exhausted — ask the parent for the next server page.
+      // The `txs` prop will update once the parent's fetch lands, at
+      // which point the useEffect above re-runs ProcessData and reveals
+      // the new rows.
+      setFetchingMore(true);
+      onLoadMore().finally(() => setFetchingMore(false));
     }
   };
 

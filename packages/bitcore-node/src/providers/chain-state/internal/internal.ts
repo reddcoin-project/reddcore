@@ -105,7 +105,19 @@ export class InternalStateProvider implements IChainStateService {
     const { req, res, args } = params;
     const { limit, since } = args;
     const query = this.getAddressQuery(params);
-    Storage.apiStreamingFind(CoinStorage, query, { limit, since, paging: '_id' }, req!, res!);
+    // BIT-46: page by mintHeight (newest first by default) instead of by
+    // _id. _id ordering is insertion-time which approximates mint time
+    // but isn't tx-height-ordered; for an address with history older
+    // than the indexer's last reorg/refill that approximation breaks.
+    // The (address, mintHeight) compound index in models/coin.ts keys
+    // this read; `since` is the mintHeight cursor for "Load more".
+    Storage.apiStreamingFind(
+      CoinStorage,
+      query,
+      { limit, since, paging: 'mintHeight' },
+      req!,
+      res!
+    );
   }
 
   async getBalanceForAddress(params: GetBalanceForAddressParams): Promise<WalletBalanceType> {

@@ -58,6 +58,10 @@ const QRDiv = styled.div`
   }
 `;
 
+// BIT-46: page size for the address tx list. Smaller initial load
+// keeps the page snappy; user pulls further pages via InfiniteScroll.
+const TX_PAGE_SIZE = 100;
+
 const Address: React.FC = () => {
   const params = useParams<{currency: string; network: string; address: string}>();
   const {address} = params;
@@ -70,6 +74,11 @@ const Address: React.FC = () => {
   const [tip, setTip] = useState<any>();
   const [txs, setTxs] = useState<any>();
   const [stats, setStats] = useState<AddressStats | null>(null);
+  // Pagination state: hasMoreOnServer is set false when the last fetch
+  // returned fewer than TX_PAGE_SIZE rows. The next-page cursor is the
+  // minimum mintHeight in the currently-loaded set — the server pages
+  // by mintHeight DESC, so we ask for "rows older than this height".
+  const [hasMoreOnServer, setHasMoreOnServer] = useState(false);
 
   useEffect(() => {
     if (!currency || !network || !address) return;
@@ -85,12 +94,13 @@ const Address: React.FC = () => {
     Promise.all([
       fetcher(`${baseUrl}/address/${address}/balance`),
       fetcher(`${baseUrl}/block/tip`),
-      fetcher(`${baseUrl}/address/${address}/txs?limit=1000`),
+      fetcher(`${baseUrl}/address/${address}/txs?limit=${TX_PAGE_SIZE}`),
     ])
       .then(([_balance, _tip, _txs]) => {
         setBalance(_balance);
         setTip(_tip);
         setTxs(_txs);
+        setHasMoreOnServer(Array.isArray(_txs) && _txs.length >= TX_PAGE_SIZE);
       })
       .catch((e: any) => {
         setError(e.message || 'Error getting address.');
@@ -208,6 +218,28 @@ const Address: React.FC = () => {
                 network={network}
                 tip={tip}
                 transactionsLength={setNumTransactions}
+                hasMoreOnServer={hasMoreOnServer}
+                onLoadMore={async () => {
+                  // Server pages by mintHeight DESC; the cursor for the
+                  // next page is the lowest mintHeight currently held.
+                  // Coin docs returned from /txs always carry mintHeight.
+                  if (!txs || txs.length === 0) return;
+                  const minHeight = txs.reduce(
+                    (acc: number, t: any) =>
+                      typeof t.mintHeight === 'number' && t.mintHeight < acc ? t.mintHeight : acc,
+                    Number.POSITIVE_INFINITY,
+                  );
+                  if (!isFinite(minHeight)) return;
+                  if (!currency || !network) return;
+                  const _normalizeParams = normalizeParams(currency, network);
+                  const baseUrl = `${getApiRoot(_normalizeParams.currency)}/${_normalizeParams.currency}/${_normalizeParams.network}`;
+                  const next = await fetcher(
+                    `${baseUrl}/address/${address}/txs?limit=${TX_PAGE_SIZE}&since=${minHeight}`,
+                  );
+                  if (!Array.isArray(next)) return;
+                  setTxs((prev: any[]) => [...(prev || []), ...next]);
+                  setHasMoreOnServer(next.length >= TX_PAGE_SIZE);
+                }}
               />
             </motion.div>
           ) : null}
