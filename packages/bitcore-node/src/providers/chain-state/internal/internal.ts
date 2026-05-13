@@ -375,11 +375,16 @@ export class InternalStateProvider implements IChainStateService {
       ins: Array<{ first: number; last: number; n: number }>;
       outs: Array<{ first: number; last: number; n: number }>;
       txs: Array<{ n: number }>;
+      coins: Array<{ n: number }>;
     }>(
         [
           { $match: { chain, network, address } },
           {
             $facet: {
+              // Total coin doc count for the address. /txs paginates
+              // over this set; the address page uses it to derive the
+              // pager's total-pages (BIT-47 follow-up).
+              coins: [{ $count: 'n' }],
               ins: [
                 { $match: { mintHeight: { $gt: SpentHeightIndicators.conflicting } } },
                 // Group by mintTxid so a tx with multiple paying outputs counts once.
@@ -447,6 +452,7 @@ export class InternalStateProvider implements IChainStateService {
     const ins = agg?.ins[0];
     const outs = agg?.outs[0];
     const numTxs = agg?.txs[0]?.n ?? 0;
+    const numCoins = agg?.coins[0]?.n ?? 0;
 
     // Resolve heights → block times in one batched lookup.
     const heights = new Set<number>();
@@ -481,7 +487,8 @@ export class InternalStateProvider implements IChainStateService {
       firstOut: toRef(outs?.first),
       lastOut: toRef(outs?.last),
       numOuts: outs?.n ?? 0,
-      numTxs
+      numTxs,
+      numCoins
     };
   }
 

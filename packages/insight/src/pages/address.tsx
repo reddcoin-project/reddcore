@@ -22,6 +22,7 @@ interface AddressStats {
   lastOut: AddressActivityRef | null;
   numOuts: number;
   numTxs: number;
+  numCoins: number;
 }
 
 const formatActivityDate = (ref: AddressActivityRef | null): string => {
@@ -249,9 +250,15 @@ const Address: React.FC = () => {
 
               <Pagination
                 currentPage={currentPage}
+                // BIT-47 follow-up: pagination is over coin docs (each
+                // doc contributes 1–2 UI rows after BIT-33 grouping),
+                // not over distinct txs. Using numTxs over-counted pages
+                // and left the trailing pages empty on addresses with
+                // partial-spend history. numCoins matches the server's
+                // actual pagination boundary.
                 totalPages={
-                  stats && stats.numTxs > 0
-                    ? Math.ceil(stats.numTxs / TX_PAGE_SIZE)
+                  stats && stats.numCoins > 0
+                    ? Math.ceil(stats.numCoins / TX_PAGE_SIZE)
                     : 0
                 }
                 onPageChange={page => fetchTxsPage(page, sortOrder, 'replace')}

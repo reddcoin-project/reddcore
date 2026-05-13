@@ -105,6 +105,7 @@ export interface AddressStats {
   lastOut: AddressActivityRef | null;   // latest spentHeight
   numOuts: number;                      // distinct spending txs
   numTxs: number;                       // distinct txs ever touching this address (union of in+out)
+  numCoins: number;                     // count of coin documents (= what /txs paginates over)
 }
 
 export type ActiveAddressFilter = 'any' | 'received' | 'sent' | 'staking';
