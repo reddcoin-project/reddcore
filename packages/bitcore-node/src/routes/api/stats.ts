@@ -122,11 +122,15 @@ router.get('/supply', async function(req: Request, res: Response) {
     if (snap) {
       setSnapshotHeaders(res, snap);
       SetCache(res, CacheTimes.Minute * 5);
+      // `snapshotAt` is included in-body too because insight's SWR fetcher
+      // discards response headers. Frontend uses it to render an "as of"
+      // freshness label on the rich-list page.
       return res.json({
         circulating: snap.totalSupply,
         unspentCount: snap.unspentCount,
         asOfHeight: snap.snapshotBlockHeight,
-        asOf: new Date(snap.snapshotBlockTime).toISOString()
+        asOf: new Date(snap.snapshotBlockTime).toISOString(),
+        snapshotAt: new Date(snap.snapshotAt).toISOString()
       });
     }
     const result = await ChainStateProvider.getCirculatingSupply({ chain, network });

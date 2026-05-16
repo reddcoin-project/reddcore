@@ -32,6 +32,10 @@ interface ChainSupply {
   unspentCount: number;
   asOfHeight: number;
   asOf: string;
+  // Populated when the response comes from the precomputed
+  // snapshot. Wall-clock time the snapshot was written. Absent when
+  // bitcore-node falls back to live aggregation (no snapshot yet).
+  snapshotAt?: string;
 }
 
 interface ActivityRef {
@@ -234,6 +238,9 @@ const RichList: React.FC = () => {
         minutes. Per-address activity (first/last receive and spend, counts)
         is cached hourly. Addresses with more than 10,000 lifetime coins
         report counts as &quot;&gt;10k&quot; to keep the fan-out bounded.
+        {supply?.snapshotAt
+          ? ` Data as of ${new Date(supply.snapshotAt).toISOString().replace('T', ' ').slice(0, 16)} UTC (block ${supply.asOfHeight.toLocaleString()}).`
+          : ''}
       </Caption>
       {data && (
         <Wrapper>
