@@ -150,7 +150,11 @@ const ChainHeader: FC<{ currency: string; network: string }> = ({ currency, netw
     } else {
       fetcher(`https://bws.bitpay.com/bws/api/v3/fiatrates/${currency.toLowerCase()}`)
         .then((data: PriceDetails) => {
-          setPrice(data.filter(d => d.code === 'USD')[0].rate);
+          // RDD (and any other chain not on BitPay's price feed) returns
+          // entries with `code`/`name` but no `rate`. Don't propagate
+          // undefined to setPrice — it would crash the render path below.
+          const usd = data?.find(d => d.code === 'USD');
+          setPrice(usd?.rate ?? 0);
         })
         .catch(() => {
           setError('Error fetching price. Please try again later.');
@@ -158,7 +162,7 @@ const ChainHeader: FC<{ currency: string; network: string }> = ({ currency, netw
 
       fetcher(`https://bitpay.com/currencies/prices?currencyPairs=["${currency}:USD"]`)
         .then((priceDisplay: PriceDisplay) => {
-          setPriceList(priceDisplay.data[0].priceDisplay);
+          setPriceList(priceDisplay?.data?.[0]?.priceDisplay ?? [0]);
         })
         .catch(() => {
           setError('Error fetching price graph data. Please try again later.');
@@ -231,7 +235,7 @@ const ChainHeader: FC<{ currency: string; network: string }> = ({ currency, netw
             <>
               <span>{getName(currency)} Exchange Rate</span>
               <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                <ChartTileHeader>${price.toLocaleString()}</ChartTileHeader>
+                <ChartTileHeader>${(price ?? 0).toLocaleString()}</ChartTileHeader>
                 <Dropdown options={priceRanges} value={priceSelectedRange} onChange={setPriceSelectedRange} />
               </div>
               <PriceMetadataSpan prices={priceList} lastPrice={price} range={priceSelectedRange} />
