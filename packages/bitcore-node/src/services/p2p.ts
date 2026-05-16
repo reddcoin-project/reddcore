@@ -64,6 +64,18 @@ export class P2pManager {
   }
 }
 
+// Freshness threshold for the syncing-node lease (ms). Default 5 min
+// preserves historical behaviour. Operators on memory-tight boxes — where
+// heavy mongo aggregation can stall the lease's heartbeat upsert past
+// 5 min and trip `Syncing Node Renewal Failure` — can raise this via
+// bitcore.config.json -> bitcoreNode.services.p2p.syncingNodeLeaseMs.
+// The same value also gates how long a non-primary waits before
+// attempting takeover, so it stays consistent with the freshness check.
+const DEFAULT_SYNCING_NODE_LEASE_MS = 5 * 60 * 1000;
+function syncingNodeLeaseMs(): number {
+  return Config.for('p2p').syncingNodeLeaseMs ?? DEFAULT_SYNCING_NODE_LEASE_MS;
+}
+
 export class BaseP2PWorker<T extends IBlock = IBlock> {
   protected lastHeartBeat = '';
   protected queuedRegistrations = new Array<NodeJS.Timeout>();
@@ -84,7 +96,7 @@ export class BaseP2PWorker<T extends IBlock = IBlock> {
     const [hostname, pid, timestamp] = this.lastHeartBeat.split(':');
     const hostNameMatches = hostname === os.hostname();
     const pidMatches = pid === process.pid.toString();
-    const timestampIsFresh = Date.now() - parseInt(timestamp) < 5 * 60 * 1000;
+    const timestampIsFresh = Date.now() - parseInt(timestamp) < syncingNodeLeaseMs();
     const amSyncingNode = hostNameMatches && pidMatches && timestampIsFresh;
     return amSyncingNode;
   }
@@ -131,7 +143,7 @@ export class BaseP2PWorker<T extends IBlock = IBlock> {
           lastHeartBeat
         }).catch(err => logger.error('Error in selfNominateSyncingNode:', err));
       },
-      primary ? 0 : 5 * 60 * 1000
+      primary ? 0 : syncingNodeLeaseMs()
     );
     this.queuedRegistrations.push(queuedRegistration);
   }

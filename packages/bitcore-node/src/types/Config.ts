@@ -126,6 +126,18 @@ export interface ConfigType {
     };
     p2p: {
       disabled?: boolean;
+      /**
+       * Freshness threshold (ms) on the syncing-node lease stored in the
+       * `state` collection. Default 300000 (5 min) preserves historical
+       * behaviour. A worker that finds its own lease older than this
+       * concludes it lost the lease and throws `Syncing Node Renewal
+       * Failure`. The same value also serves as the takeover delay for
+       * a non-primary worker (it waits this long before nominating
+       * itself). On memory-constrained boxes where mongo write latency
+       * can spike past 5 min during heavy indexing/aggregation, raise
+       * this (e.g. 1200000 = 20 min) to keep the worker stable.
+       */
+      syncingNodeLeaseMs?: number;
     };
     socket: {
       disabled?: boolean;
