@@ -1,45 +1,42 @@
 services:
   database:
     image: mongo:4.4
-    # No `ports:` — bitcore-node reaches mongo via the internal compose
-    # network using hostname `database`. Exposing 27017 to the host
-    # bypasses UFW (docker writes its own NAT rules in DOCKER-USER below
-    # the chains UFW manages) and would publish unauthenticated mongo to
-    # the public internet. See docs/deployment.md §7.
+    # WT cache cap + container mem limit — required on 8 GB. Without
+    # them Mongo would default to ~3.5 GB WT cache + uncapped runtime,
+    # and the host would thrash under bitcore-node + reddcoind load.
+    command: ["mongod", "--bind_ip_all", "--wiredTigerCacheSizeGB=3"]
+    mem_limit: 4g
+    memswap_limit: 4g
+    # ports: 27017 deliberately not bound to host — bitcore-node
+    # connects via the internal compose network using hostname `database`.
+    # Binding to the host bypasses UFW and exposes unauth mongo to the
+    # internet. See docs/deployment.md §7.
     volumes:
-    - ${BITCORE_MONGO_DATA:-/data/db}:/data/db
-    # Default container nofile (~1024) is too low: heavy aggregations with
-    # allowDiskUse open many spill files. 64k matches systemd's typical
-    # mongod tuning and gives headroom for concurrent stat queries on
-    # high-volume addresses.
+      - ${BITCORE_MONGO_DATA:-/data/db}:/data/db
+    # nofile bumped to 64k so allowDiskUse spill files don't OOM the
+    # container during heavy aggregations.
     ulimits:
       nofile:
         soft: 64000
         hard: 64000
+    restart: unless-stopped
 
   reddcoin:
-    # Official Reddcoin Core image. No `:latest` tag is published —
-    # always pin the version (verified working: v4.22.9). The image
-    # runs as uid/gid 1000 with data dir at /home/reddcoind/.reddcoin,
-    # so the host volume needs matching ownership:
-    #
-    #   sudo mkdir -p /var/lib/reddcoind && sudo chown -R 1000:1000 /var/lib/reddcoind
-    #
-    # Container's setup.sh reads the env vars below and writes
-    # ~/.reddcoin/reddcoin.conf on first run. Subsequent starts leave
-    # the conf alone — edit it in place to change values later.
     image: reddcoincore/reddcoind:v4.22.9
+    # Image user is uid/gid 1000; the host volume mount must match.
     user: "1000:1000"
     ports:
-      - "45444:45444"                  # P2P — open inbound (also requires the ufw rule)
-      - "127.0.0.1:45443:45443"        # RPC — localhost only
+      - "45444:45444"                  # P2P — exposed for inbound peers
+      - "127.0.0.1:45443:45443"        # RPC — localhost only (debugging)
     volumes:
       - /var/lib/reddcoind:/home/reddcoind/.reddcoin
     environment:
+      # setup.sh inside the image reads these on first run and writes
+      # ~/.reddcoin/reddcoin.conf. Subsequent runs skip the rewrite.
       - RPC_SERVER=1
       - RPC_USERNAME=bitcorenodetest
       - RPC_PASSWORD=local321
-      - RPC_ALLOW_IP=172.16.0.0/12     # Docker bridge network range
+      - RPC_ALLOW_IP=172.16.0.0/12     # Docker network range
       - RPC_PORT=45443
       - RPC_BIND=0.0.0.0
       - ZMQ_PUBRAWBLOCK=tcp://0.0.0.0:28332
@@ -50,20 +47,21 @@ services:
     restart: unless-stopped
 
   bitcore-node:
-    build: .
+    # Package-specific multi-stage Dockerfile (slim runtime), not the
+    # root /Dockerfile which is the test-runner image.
+    build:
+      context: .
+      dockerfile: packages/bitcore-node/Dockerfile
     image: bitcore-node
-    links:
+    depends_on:
       - database
+      - reddcoin
     ports:
-      - 8100:8100
-      - 3000:3000
+      - "3000:3000"
     environment:
       - DB_HOST=database
-    env_file: .env
-
-#insight:
-  #image: insight
-  #links:
-    #- bitcore-node
-  #environment:
-    #- API_URL=bitcore-node
+    volumes:
+      # Mount the (gitignored) operator config read-only into the image's
+      # default config path.
+      - ./bitcore.config.json:/bitcore/bitcore.config.json:ro
+    restart: unless-stopped
