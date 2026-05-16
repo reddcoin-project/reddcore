@@ -1,8 +1,11 @@
 services:
   database:
     image: mongo:4.4
-    ports:
-    - 27017:27017
+    # No `ports:` — bitcore-node reaches mongo via the internal compose
+    # network using hostname `database`. Exposing 27017 to the host
+    # bypasses UFW (docker writes its own NAT rules in DOCKER-USER below
+    # the chains UFW manages) and would publish unauthenticated mongo to
+    # the public internet. See docs/deployment.md §7.
     volumes:
     - ${BITCORE_MONGO_DATA:-/data/db}:/data/db
     # Default container nofile (~1024) is too low: heavy aggregations with
@@ -13,7 +16,39 @@ services:
       nofile:
         soft: 64000
         hard: 64000
-    
+
+  reddcoin:
+    # Official Reddcoin Core image. No `:latest` tag is published —
+    # always pin the version (verified working: v4.22.9). The image
+    # runs as uid/gid 1000 with data dir at /home/reddcoind/.reddcoin,
+    # so the host volume needs matching ownership:
+    #
+    #   sudo mkdir -p /var/lib/reddcoind && sudo chown -R 1000:1000 /var/lib/reddcoind
+    #
+    # Container's setup.sh reads the env vars below and writes
+    # ~/.reddcoin/reddcoin.conf on first run. Subsequent starts leave
+    # the conf alone — edit it in place to change values later.
+    image: reddcoincore/reddcoind:v4.22.9
+    user: "1000:1000"
+    ports:
+      - "45444:45444"                  # P2P — open inbound (also requires the ufw rule)
+      - "127.0.0.1:45443:45443"        # RPC — localhost only
+    volumes:
+      - /var/lib/reddcoind:/home/reddcoind/.reddcoin
+    environment:
+      - RPC_SERVER=1
+      - RPC_USERNAME=bitcorenodetest
+      - RPC_PASSWORD=local321
+      - RPC_ALLOW_IP=172.16.0.0/12     # Docker bridge network range
+      - RPC_PORT=45443
+      - RPC_BIND=0.0.0.0
+      - ZMQ_PUBRAWBLOCK=tcp://0.0.0.0:28332
+      - ZMQ_PUBRAWTX=tcp://0.0.0.0:28333
+      - DAEMON_OPTION_PRINTTOCONSOLE=1
+      - DAEMON_OPTION_TXINDEX=1
+      - TESTNET=0
+    restart: unless-stopped
+
   bitcore-node:
     build: .
     image: bitcore-node
