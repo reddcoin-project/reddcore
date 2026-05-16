@@ -59,7 +59,7 @@ class ChainStatsWorker {
   private async loop() {
     // Probe once: if the provider doesn't implement the aggregations we
     // need (non-UTXO chain), don't loop at all.
-    const supported = await this.providerSupported();
+    const supported = this.providerSupported();
     if (!supported) {
       logger.info(
         'ChainStats: %s:%s provider missing UTXO aggregations; not scheduling refresh',
@@ -116,22 +116,23 @@ class ChainStatsWorker {
     }
   }
 
-  private async providerSupported(): Promise<boolean> {
+  private providerSupported(): boolean {
+    // Feature-detect via the proxy registry. Calling getTopAddresses to
+    // probe would actually run the full ~14M-doc aggregation (the $group
+    // step consumes every match regardless of $limit), which is exactly
+    // what we're trying to avoid hitting at startup. Asking the proxy if
+    // the method exists is O(1) and equivalent to what the proxy itself
+    // checks before throwing "not implemented".
     try {
-      // Cheapest probe: a limit-1 rich-list. If the provider exposes it,
-      // the other two aggregations are guaranteed by the InternalState
-      // provider interface (all three share UTXO_BY_ADDRESS access path).
-      await ChainStateProvider.getTopAddresses({
-        chain: this.chain,
-        network: this.network,
-        args: { limit: 1 }
-      });
-      return true;
-    } catch (err: any) {
-      if (/not implemented/i.test(err?.message || '')) return false;
-      // Any other error (empty DB, transient mongo blip) — assume supported;
-      // the main loop will surface real failures.
-      return true;
+      const provider = (ChainStateProvider as any).get({ chain: this.chain, network: this.network });
+      return (
+        typeof provider?.getTopAddresses === 'function' &&
+        typeof provider?.getAddressDistribution === 'function' &&
+        typeof provider?.getCirculatingSupply === 'function'
+      );
+    } catch {
+      // No provider registered for this chain/network at all.
+      return false;
     }
   }
 
