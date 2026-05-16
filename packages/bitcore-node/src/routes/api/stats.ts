@@ -1,9 +1,25 @@
 import express, { Request, Response } from 'express';
 import logger from '../../logger';
+import { ChainStatsSnapshotStorage, IChainStatsSnapshot } from '../../models/chainStatsSnapshot';
 import { ChainStateProvider } from '../../providers/chain-state';
 import { CacheTimes, SetCache } from '../middleware';
 
 const router = express.Router({ mergeParams: true });
+
+// Precomputed snapshot of chain-wide aggregations. When present,
+// /stats/rich-list, /stats/distribution, and /stats/supply read from this
+// single doc instead of paying the 5+ min cost of a live aggregation. If
+// the snapshot doesn't exist yet (immediately after first deploy), the
+// routes fall back to the live path so they remain functional during the
+// initial worker run.
+async function loadSnapshot(chain: string, network: string): Promise<IChainStatsSnapshot | null> {
+  return ChainStatsSnapshotStorage.collection.findOne({ chain, network });
+}
+
+function setSnapshotHeaders(res: Response, snap: IChainStatsSnapshot) {
+  res.setHeader('X-Snapshot-At', new Date(snap.snapshotAt).toISOString());
+  res.setHeader('X-Snapshot-Block-Height', String(snap.snapshotBlockHeight));
+}
 
 router.get('/', async function(_: Request, res: Response) {
   return res.send(404);
@@ -44,6 +60,19 @@ router.get('/daily-transactions', async function(req: Request, res: Response) {
 router.get('/rich-list', async function(req: Request, res: Response) {
   const { chain, network } = req.params;
   try {
+    const snap = await loadSnapshot(chain, network);
+    if (snap) {
+      const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 1000);
+      const offset = Math.max(Number(req.query.offset) || 0, 0);
+      // snap.top entries already carry absolute ranks 1..topLimit from the
+      // snapshot writer; slicing preserves them. If offset+limit overruns
+      // the snapshot's topLimit (default 200), the response is short.
+      const slice = snap.top.slice(offset, offset + limit);
+      setSnapshotHeaders(res, snap);
+      SetCache(res, CacheTimes.Minute * 5);
+      return res.json(slice);
+    }
+    // Fallback to live aggregation until the first snapshot writer pass.
     const result = await ChainStateProvider.getTopAddresses({
       chain,
       network,
@@ -89,6 +118,17 @@ router.get('/rich-list', async function(req: Request, res: Response) {
 router.get('/supply', async function(req: Request, res: Response) {
   const { chain, network } = req.params;
   try {
+    const snap = await loadSnapshot(chain, network);
+    if (snap) {
+      setSnapshotHeaders(res, snap);
+      SetCache(res, CacheTimes.Minute * 5);
+      return res.json({
+        circulating: snap.totalSupply,
+        unspentCount: snap.unspentCount,
+        asOfHeight: snap.snapshotBlockHeight,
+        asOf: new Date(snap.snapshotBlockTime).toISOString()
+      });
+    }
     const result = await ChainStateProvider.getCirculatingSupply({ chain, network });
     SetCache(res, CacheTimes.Minute * 5);
     return res.json(result);
@@ -119,6 +159,16 @@ router.get('/supply', async function(req: Request, res: Response) {
 router.get('/distribution', async function(req: Request, res: Response) {
   const { chain, network } = req.params;
   try {
+    const snap = await loadSnapshot(chain, network);
+    if (snap) {
+      setSnapshotHeaders(res, snap);
+      SetCache(res, CacheTimes.Minute * 5);
+      return res.json({
+        totalSupply: snap.totalSupply,
+        totalAddresses: snap.totalAddresses,
+        buckets: snap.buckets
+      });
+    }
     const result = await ChainStateProvider.getAddressDistribution({ chain, network });
     SetCache(res, CacheTimes.Minute * 5);
     return res.json(result);

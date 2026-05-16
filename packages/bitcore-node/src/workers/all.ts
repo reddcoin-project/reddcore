@@ -3,6 +3,7 @@ import 'source-map-support/register';
 import logger from '../logger';
 import { Modules } from '../modules';
 import { Api } from '../services/api';
+import { ChainStats } from '../services/chainStats';
 import { Event } from '../services/event';
 import { P2P } from '../services/p2p';
 import { Storage } from '../services/storage';
@@ -24,6 +25,7 @@ export const FullClusteredWorker = async () => {
   services.push(Storage, Event);
   if (cluster.isPrimary) {
     services.push(P2P);
+    services.push(ChainStats);
     if (args.DEBUG) {
       services.push(Api);
     } else {
