@@ -6,7 +6,7 @@
 
 **The peer-to-peer networking protocol for RDD.**
 
-`bitcore-p2p-redd` adds Reddcoin protocol support for Bitcore. The wire format is Bitcoin-derived, with reddcoin's network magic (`0xfbc0b6db`), default protocol version `80000`, the `/Reddcore:VERSION/` user-agent, and BIP155 `sendaddrv2` advertisement.
+`bitcore-p2p-redd` adds Reddcoin protocol support for Bitcore. The wire format is Bitcoin-derived, with reddcoin's network magic (`0xfbc0b6db`), default protocol version `80016`, the `/Reddcore:VERSION/` user-agent, and BIP155 `sendaddrv2` advertisement.
 
 See [the main Reddcore repo](https://github.com/reddcoin-project/reddcore) for more information.
 
