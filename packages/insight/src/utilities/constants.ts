@@ -1,4 +1,16 @@
-export const SUPPORTED_CURRENCIES = ['BTC', 'BCH', 'ETH', 'DOGE', 'LTC', 'RDD'];
+// Tile grid on the home page renders one CurrencyTile per entry here.
+// Defaults to the historical six-chain list so behaviour is unchanged on
+// builds that don't set the env var. Single-chain deployments (e.g. the
+// reddcoin-only insight.redd.ink) set `REACT_APP_CHAINS=RDD` in their
+// .env.production to suppress the other tiles, which would otherwise
+// each fire a request to /api/<CHAIN>/mainnet/block that returns 500
+// (no provider configured) and render an "Error getting latest block"
+// placeholder. Order is preserved from the env var; empty entries are
+// dropped.
+export const SUPPORTED_CURRENCIES = (process.env.REACT_APP_CHAINS || 'BTC,BCH,ETH,DOGE,LTC,RDD')
+  .split(',')
+  .map(s => s.trim().toUpperCase())
+  .filter(Boolean);
 export const API_ROOT = process.env.REACT_APP_API_ROOT || 'https://api.bitcore.io/api';
 export const API_ROOT_ETH = process.env.REACT_APP_API_ROOT_ETH || 'https://api-eth.bitcore.io/api';
 export const API_ROOT_RDD = process.env.REACT_APP_API_ROOT_RDD || 'http://localhost:3010/api';
