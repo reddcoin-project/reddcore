@@ -22,12 +22,14 @@
   },
   "keywords": [
     "reddcoin",
+    "reddcore",
     "bitcoin",
     "bitcore"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/reddcoin-project/reddcore/tree/master/packages/bitcore-p2p-redd"
+    "url": "git+https://github.com/reddcoin-project/reddcore.git",
+    "directory": "packages/bitcore-p2p-redd"
   },
   "dependencies": {
     "@reddcoinproject/bitcore-lib-redd": "^11.8.1",
