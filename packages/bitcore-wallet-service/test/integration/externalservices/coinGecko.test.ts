@@ -146,8 +146,8 @@ describe('CoinGecko integration', function() {
   const getTokens = (req: any = {}) => cg().coinGeckoGetTokens(req);
 
   function forceGlobalCacheMisses() {
-    sandbox.stub(cg().storage, 'checkAndUseGlobalCache').callsFake((_key, _duration, cb) => cb(null, null, null));
-    sandbox.stub(cg().storage, 'storeGlobalCache').callsFake((_key, _values, cb) => cb(null));
+    sandbox.stub(cg().storage, 'checkAndUseGlobalCache').callsArgWith(2, null, null, null);
+    sandbox.stub(cg().storage, 'storeGlobalCache').callsArgWith(2, null);
   }
 
   before(async () => {
@@ -513,8 +513,8 @@ describe('CoinGecko integration', function() {
     it('should use DB cache for default marketstats coin', async () => {
       const checkCacheStub = sandbox
         .stub(cg().storage, 'checkAndUseGlobalCache')
-        .callsFake((_key, _duration, cb) => cb(null, null, null));
-      const storeCacheStub = sandbox.stub(cg().storage, 'storeGlobalCache').callsFake((_key, _values, cb) => cb(null));
+        .callsArgWith(2, null, null, null);
+      const storeCacheStub = sandbox.stub(cg().storage, 'storeGlobalCache').callsArgWith(2, null);
 
       const data = await getMarketStats({ coin: 'btc' });
 
@@ -528,8 +528,8 @@ describe('CoinGecko integration', function() {
     it('should bypass DB cache for token marketstats requests', async () => {
       const checkCacheStub = sandbox
         .stub(cg().storage, 'checkAndUseGlobalCache')
-        .callsFake((_key, _duration, cb) => cb(null, null, null));
-      const storeCacheStub = sandbox.stub(cg().storage, 'storeGlobalCache').callsFake((_key, _values, cb) => cb(null));
+        .callsArgWith(2, null, null, null);
+      const storeCacheStub = sandbox.stub(cg().storage, 'storeGlobalCache').callsArgWith(2, null);
 
       const tokenAddress = '0xaf88d065e77c8cc2239327c5edb3a432268e5831';
 
@@ -833,8 +833,8 @@ describe('CoinGecko integration', function() {
     it('should use DB cache for default fiatrates coin', async () => {
       const checkCacheStub = sandbox
         .stub(cg().storage, 'checkAndUseGlobalCache')
-        .callsFake((_key, _duration, cb) => cb(null, null, null));
-      const storeCacheStub = sandbox.stub(cg().storage, 'storeGlobalCache').callsFake((_key, _values, cb) => cb(null));
+        .callsArgWith(2, null, null, null);
+      const storeCacheStub = sandbox.stub(cg().storage, 'storeGlobalCache').callsArgWith(2, null);
 
       const data = await getFiatRates({ coin: 'BTC' });
 
@@ -848,8 +848,8 @@ describe('CoinGecko integration', function() {
     it('should bypass DB cache for token fiatrates requests', async () => {
       const checkCacheStub = sandbox
         .stub(cg().storage, 'checkAndUseGlobalCache')
-        .callsFake((_key, _duration, cb) => cb(null, null, null));
-      const storeCacheStub = sandbox.stub(cg().storage, 'storeGlobalCache').callsFake((_key, _values, cb) => cb(null));
+        .callsArgWith(2, null, null, null);
+      const storeCacheStub = sandbox.stub(cg().storage, 'storeGlobalCache').callsArgWith(2, null);
 
       const tokenAddress = '0xaf88d065e77c8cc2239327c5edb3a432268e5831';
 
@@ -932,7 +932,7 @@ describe('CoinGecko integration', function() {
       const bchWarns = warnSpy
         .getCalls()
         .map(c => c.args)
-        .filter(args => args?.[0]?.toString().includes('CoinGecko fiat rates fetch failed') && args?.[1]?.coin === 'bch');
+        .filter((args: any[]) => args?.[0]?.toString().includes('CoinGecko fiat rates fetch failed') && args?.[1]?.coin === 'bch');
       bchWarns.length.should.be.greaterThan(0);
     });
   });

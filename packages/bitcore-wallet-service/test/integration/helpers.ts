@@ -116,20 +116,20 @@ class Helpers {
   }
 
   mockBlockchainExplorer() {
-    const blockchainExplorer = sinon.stub();
-    blockchainExplorer.register = sinon.stub().callsArgWith(1, null, null);
-    blockchainExplorer.addAddresses = sinon.stub().callsArgWith(2, null, null);
-    blockchainExplorer.getAddressUtxos = sinon.stub().callsArgWith(2, null, []);
-    blockchainExplorer.getCheckData = sinon.stub().callsArgWith(1, null, { sum: 100 });
-    blockchainExplorer.getUtxos = sinon.stub().callsArgWith(1, null, []);
-    blockchainExplorer.getTransactions = sinon.stub().callsArgWith(2, null, []);
-    blockchainExplorer.getBlockchainHeight = sinon.stub().callsArgWith(0, null, 1000, 'hash');
-    blockchainExplorer.estimateGas = sinon.stub().callsArgWith(1, null, Defaults.MIN_GAS_LIMIT);
-    blockchainExplorer.getBalance = sinon.stub().callsArgWith(1, null, { unconfirmed: 0, confirmed: '10000000000', balance: '10000000000' });
-    blockchainExplorer.getReserve = sinon.stub().callsArgWith(0, null, Defaults.MIN_XRP_BALANCE);
-    // just a number >0 (xrp does not accept 0)
-    blockchainExplorer.getTransactionCount = sinon.stub().callsArgWith(1, null, '5');
-    return blockchainExplorer;
+    return {
+      register: sinon.stub().callsArgWith(1, null, null),
+      addAddresses: sinon.stub().callsArgWith(2, null, null),
+      getAddressUtxos: sinon.stub().callsArgWith(2, null, []),
+      getCheckData: sinon.stub().callsArgWith(1, null, { sum: 100 }),
+      getUtxos: sinon.stub().callsArgWith(1, null, []),
+      getTransactions: sinon.stub().callsArgWith(2, null, []),
+      getBlockchainHeight: sinon.stub().callsArgWith(0, null, 1000, 'hash'),
+      estimateGas: sinon.stub().callsArgWith(1, null, Defaults.MIN_GAS_LIMIT),
+      getBalance: sinon.stub().callsArgWith(1, null, { unconfirmed: 0, confirmed: '10000000000', balance: '10000000000' }),
+      // just a number >0 (xrp does not accept 0)
+      getReserve: sinon.stub().callsArgWith(0, null, Defaults.MIN_XRP_BALANCE),
+      getTransactionCount: sinon.stub().callsArgWith(1, null, '5'),
+    };
   }
 
   getStorage() {
