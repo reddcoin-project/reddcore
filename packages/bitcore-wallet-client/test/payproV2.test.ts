@@ -8,7 +8,7 @@ describe('PayProV2', () => {
   const header = {};
   let postArgs;
   const mockRequest = (bodyBuf, headers) => {
-    PayProV2.request = {
+    (PayProV2 as any).request = {
       'get': (_url) => {
         return {
           set: (_k, _v) => {
@@ -64,7 +64,7 @@ describe('PayProV2', () => {
 
     it('Should handle a failed (404) request', (done) => {
       const header = {};
-      PayProV2.request = {
+      (PayProV2 as any).request = {
         'post': (_url) => {
           return {
             set: (_k, _v) => {
@@ -115,7 +115,7 @@ describe('PayProV2', () => {
 
     it('Should handle a failed (400) request', (done) => {
       const header = {};
-      PayProV2.request = {
+      (PayProV2 as any).request = {
         'post': (_url) => {
           return {
             set: (_k, _v) => {
@@ -166,7 +166,7 @@ describe('PayProV2', () => {
 
     it('Should handle a failed (500) request', (done) => {
       const header = {};
-      PayProV2.request = {
+      (PayProV2 as any).request = {
         'post': (_url) => {
           return {
             set: (_k, _v) => {

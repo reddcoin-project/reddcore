@@ -10,7 +10,7 @@ const should = chai.should();
 
 function mockRequest(bodyBuf, headers) {
   bodyBuf = Array.isArray(bodyBuf) ? bodyBuf : [bodyBuf];
-  PayPro.r = {
+  const r: any = {
     'get': (_url) => {
       return {
         set: (_k, _v) => { },
@@ -40,7 +40,7 @@ function mockRequest(bodyBuf, headers) {
       };
     }
   };
-
+  PayPro.r = r;
 };
 
 describe('PayPro', function() {
@@ -85,7 +85,7 @@ describe('PayPro', function() {
 
 
   it('Should handle a failed (404) request', function (done) {
-    PayPro.r = {
+    const r: any = {
       'get': (_url) => {
         return {
           set: (_k, _v) => { },
@@ -100,6 +100,7 @@ describe('PayPro', function() {
       },
       'post': () => { }
     };
+    PayPro.r = r;
     PayPro.get({
       url: 'https://test.bitpay.com/paypro',
       network: 'testnet',
@@ -207,7 +208,7 @@ describe('PayPro', function() {
       url: 'http://an.url.com/paypro',
       coin: 'bch',
     };
-    PayPro.r = {
+    const r: any = {
       'post': (_url) => {
         return {
           set: (_k, _v) => { },
@@ -221,6 +222,7 @@ describe('PayPro', function() {
         };
       }
     };
+    PayPro.r = r;
     PayPro.send(opts, function (err, data, memo) {
       should.exist(err);
       done();

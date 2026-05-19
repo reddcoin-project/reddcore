@@ -4605,7 +4605,7 @@ describe('client API', function() {
     let PP, oldreq, DATA, postArgs;
     const header: any = {};
     const mockRequest = (bodyBuf, headers) => {
-      Client.PayProV2.request = {
+      (Client.PayProV2 as any).request = {
         get: _url => {
           return {
             set: (_k, _v) => {
@@ -8906,9 +8906,9 @@ describe('client API', function() {
 
       const client = new Client();
 
-      const _f = sandbox.stub(client, '_fetchLatestNotifications').callsFake((interval, cb) => {
+      const _f = sandbox.stub(client, '_fetchLatestNotifications').callsFake(((interval, cb) => {
         cb(new Errors.NOT_FOUND());
-      });
+      }) as any);
 
       client._initNotifications({
         notificationIntervalSeconds: 1
@@ -8926,9 +8926,9 @@ describe('client API', function() {
 
       const client = new Client();
 
-      const _f = sandbox.stub(client, '_fetchLatestNotifications').callsFake((interval, cb) => {
+      const _f = sandbox.stub(client, '_fetchLatestNotifications').callsFake(((interval, cb) => {
         cb(new Errors.NOT_AUTHORIZED());
-      });
+      }) as any);
 
       client._initNotifications({
         notificationIntervalSeconds: 1
