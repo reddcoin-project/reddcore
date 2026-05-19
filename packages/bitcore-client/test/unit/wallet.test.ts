@@ -66,7 +66,7 @@ describe('Wallet', function() {
     await bcnStorage.stop();
   });
   beforeEach(function() {
-    sandbox.stub(request, 'Request').callsFake(function(args) {
+    sandbox.stub(request as any, 'Request').callsFake(function(args) {
       args.url = args.url.replace('https://api.bitcore.io/api', baseUrl);
       args.url = args.url.replace(baseUrl, '/api');
       const req = api[args.method.toLowerCase()](args.url);
